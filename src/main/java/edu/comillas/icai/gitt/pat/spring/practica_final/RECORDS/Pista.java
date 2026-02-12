@@ -30,4 +30,5 @@ public record Pista(
         if (fechaAlta == null) {
             fechaAlta = LocalDateTime.now();
         }
+    }
 }
