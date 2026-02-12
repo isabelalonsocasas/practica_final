@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 public record Pista(
     @PositiveOrZero @NotNull
-    Integer idPista,
+    int idPista,
 
     @NotBlank
     String nombre,
