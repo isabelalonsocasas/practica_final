@@ -29,7 +29,7 @@ public record Usuario(
         @NotBlank
         String telefono,
 
-        @NotNull
+        @NotNull //Como hemos creado uno por defecto pensar si es necesario
         Rol rol,
 
         @NotNull
