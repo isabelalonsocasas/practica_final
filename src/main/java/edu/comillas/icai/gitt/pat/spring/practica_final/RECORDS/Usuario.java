@@ -40,5 +40,14 @@ public record Usuario(
         List<Reserva> reservas  // Lista de Reservas que tiene asignadas el usuario
 
 ) {
-
+        //LOS USUARIOS SERAN POR DEFECTO USER
+        public Usuario{
+                if (rol == null) {
+                        rol = new Rol(
+                                1,
+                                Rol.NombreRol.USER,
+                                "Usuario por defecto"
+                        );
+                }
+        }
 }
