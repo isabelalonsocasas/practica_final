@@ -49,5 +49,9 @@ public record Usuario(
                                 "Usuario por defecto"
                         );
                 }
+
+                if (fechaRegistro == null) {
+                        fechaRegistro = LocalDateTime.now();
+                }
         }
 }
