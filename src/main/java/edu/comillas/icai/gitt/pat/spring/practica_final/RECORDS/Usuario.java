@@ -40,8 +40,4 @@ public record Usuario(
 
 ) {
 
-    public enum Rol { //Para que Rol solo pueda tomar valores USER o ADMIN
-        USER,
-        ADMIN
-    }
 }
