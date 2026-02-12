@@ -40,6 +40,10 @@ public record Reserva(
     }
 
     public Reserva {
+        if (fechaCreacion == null) {
+            fechaCreacion = LocalDateTime.now();
+        }
+        
         if (horaFin == null) {
             horaFin = horaInicio().plusMinutes(duracionMinutos);
         }
