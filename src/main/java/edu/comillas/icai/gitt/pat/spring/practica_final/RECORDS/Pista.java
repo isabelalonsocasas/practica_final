@@ -8,7 +8,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 import java.time.LocalDateTime;
 
 public record Pista(
-    @PositiveOrZero @NotNull
+    @Positive @NotNull
     int idPista,
 
     @NotBlank

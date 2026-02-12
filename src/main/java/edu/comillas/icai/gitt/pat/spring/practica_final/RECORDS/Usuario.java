@@ -3,14 +3,15 @@ package edu.comillas.icai.gitt.pat.spring.practica_final.RECORDS;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 public record Usuario(
 
-        @NotBlank
-        String idUsuario,
+        @Positive @NotNull
+        int idUsuario,
 
         @NotBlank
         String nombre,

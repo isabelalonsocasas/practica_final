@@ -1,13 +1,14 @@
 package edu.comillas.icai.gitt.pat.spring.practica_final.RECORDS;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 public record Reserva(
-        @PositiveOrZero
+        @Positive @NotNull
         int idReserva,
 
         @PositiveOrZero
