@@ -54,4 +54,6 @@ public record Usuario(
                         fechaRegistro = LocalDateTime.now();
                 }
         }
+
+
 }
