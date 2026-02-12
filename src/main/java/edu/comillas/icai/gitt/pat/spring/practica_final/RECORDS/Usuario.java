@@ -55,5 +55,13 @@ public record Usuario(
                 }
         }
 
+        @Override
+        public String getEmail() {
+                return this.email;
+        }
 
+        @Override
+        public String getPassword() {
+                return this.password;
+        }
 }
