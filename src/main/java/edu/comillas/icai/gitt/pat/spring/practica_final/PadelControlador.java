@@ -18,5 +18,10 @@ public class PadelControlador {
     private final Map<Integer, Pista> pistas = new HashMap<>();
     private final Map<Integer, Reserva> reservas = new HashMap<>();
 
+    @PostMapping("/pistaPadel/auth/register")
+    public Usuario registrarUsuario(@Valid @RequestBody Usuario NuevoUsuario) {
+        usuarios.put(NuevoUsuario.idUsuario(), NuevoUsuario);
+        return NuevoUsuario;
+    }
 
 }
