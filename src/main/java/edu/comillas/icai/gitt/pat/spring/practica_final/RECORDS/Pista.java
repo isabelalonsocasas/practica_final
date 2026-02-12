@@ -25,4 +25,9 @@ public record Pista(
     @NotNull
     LocalDateTime fechaAlta
 
-) {}
+) {
+    public Pista {
+        if (fechaAlta == null) {
+            fechaAlta = LocalDateTime.now();
+        }
+}
