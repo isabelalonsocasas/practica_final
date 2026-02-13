@@ -73,4 +73,22 @@ public class ControladorGlobalDeErrores {
                 null);
         return ResponseEntity.status(status).body(bodyerror);
     }
+
+    //Errores cuando El JSON esta mal formado, errores de tipo 400
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ModeloError> manejarJsonMal(HttpMessageNotReadableException ex, HttpServletRequest request) {
+
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+
+        ModeloError bodyerror = new ModeloError(
+                status.value(),
+                "JSON inválido",
+                request.getRequestURI(),
+                OffsetDateTime.now(),
+                null
+        );
+
+        return ResponseEntity.status(status).body(bodyerror);
+    }
+
 }
