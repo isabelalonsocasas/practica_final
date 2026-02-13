@@ -65,4 +65,17 @@ public record Reserva(
             horaFin = horaInicio().plusMinutes(duracionMinutos);
         }
     }
+    public Reserva(int idReserva, int idUsuario, int idPista, LocalDate fechaReserva, LocalTime horaInicio, int duracionMinutos) {
+        this(
+                idReserva,
+                idUsuario,
+                idPista,
+                fechaReserva,
+                horaInicio,
+                duracionMinutos,
+                null,
+                Estado.ACTIVA,
+                null
+        );
+    }
 }

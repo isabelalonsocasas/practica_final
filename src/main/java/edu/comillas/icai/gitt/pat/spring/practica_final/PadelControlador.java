@@ -5,6 +5,8 @@ import edu.comillas.icai.gitt.pat.spring.practica_final.RECORDS.Reserva;
 import edu.comillas.icai.gitt.pat.spring.practica_final.RECORDS.Usuario;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,11 +14,13 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @RestController
 public class PadelControlador {
@@ -180,4 +184,66 @@ public class PadelControlador {
 
         return reservasPista;
     }
+
+    //Reservations
+    private final AtomicInteger nextReservaId = new AtomicInteger(1);
+    private boolean haySolape(int idPista, LocalDate fechaReserva, LocalTime horaInicioNueva, int duracionMinutosNueva) {
+
+        LocalTime horaFinNueva = horaInicioNueva.plusMinutes(duracionMinutosNueva);
+
+        for (Reserva reservaExistente : reservas.values()) {
+
+            if (reservaExistente.idPista() != idPista) continue;
+            if (!reservaExistente.fechaReserva().equals(fechaReserva)) continue;
+
+            LocalTime horaInicioExistente = reservaExistente.horaInicio();
+            LocalTime horaFinExistente    = reservaExistente.horaFin(); // ya calculada en Reserva
+
+            // Solape si: inicioExistente < finNuevo  Y  finExistente > inicioNuevo
+            boolean solapa = horaInicioExistente.isBefore(horaFinNueva)
+                    && horaFinExistente.isAfter(horaInicioNueva);
+
+            if (solapa) return true;
+        }
+
+        return false;
+    }
+    private record ReservaBody(
+            @NotNull @Positive Integer idPista,
+            @NotNull LocalDate fechaReserva,
+            @NotNull LocalTime horaInicio,
+            @NotNull @Positive Integer duracionMinutos
+    ) {}
+    @PostMapping("/pistaPadel/reservations")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Reserva crearReserva(@Valid @RequestBody ReservaBody reserva){
+        // 404: la pista no existe
+        if (!pistas.containsKey(reserva.idPista())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Pista no existe");
+        }
+
+        // 409: slot ocupado (mismo courtId + misma fecha + solape horario)
+        if (haySolape(reserva.idPista(), reserva.fechaReserva(), reserva.horaInicio(), reserva.duracionMinutos())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Slot ocupado");
+        }
+        // Generar idReserva
+        int idReserva = nextReservaId.getAndIncrement();
+
+        // Usuario (si no hay auth todavía)
+        int idUsuario = 0;
+
+        // Usa tu constructor corto de Reserva (6 params)
+        Reserva nueva = new Reserva(
+                idReserva,
+                idUsuario,
+                reserva.idPista(),
+                reserva.fechaReserva(),
+                reserva.horaInicio(),
+                reserva.duracionMinutos()
+        );
+
+        reservas.put(nueva.idReserva(), nueva);
+        return nueva;
+    }
 }
+
