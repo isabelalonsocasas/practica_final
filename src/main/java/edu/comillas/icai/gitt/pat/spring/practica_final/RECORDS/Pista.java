@@ -31,4 +31,8 @@ public record Pista(
             fechaAlta = LocalDateTime.now();
         }
     }
+
+    public boolean isActive() {
+        return activa;
+    }
 }

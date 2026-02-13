@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -19,6 +20,7 @@ public class PadelControlador {
     private final Map<Integer, Usuario> usuarios = new HashMap<>();
     private final Map<Integer, Pista> pistas = new HashMap<>();
     private final Map<Integer, Reserva> reservas = new HashMap<>();
+    private final Map<String, Usuario> sesiones = new HashMap<>();
 
     ///  Métodos auth usuario
     @PostMapping("/pistaPadel/auth/register")
@@ -27,7 +29,7 @@ public class PadelControlador {
         return NuevoUsuario;
     }
 
-    // Cambiar a auth
+    // Cambiar a auth. Quitar ResponseEntity<Usuario>
     @PostMapping("/pistaPadel/auth/login")
     public ResponseEntity<Usuario> loginUsuario(@Valid @RequestBody Map<String, String> body){ //ResponseEntity para las respuestas. El @Valid da el 400 Bad Request
 
@@ -50,9 +52,24 @@ public class PadelControlador {
 
     /// Métodos users
     @GetMapping("/pistaPadel/users") // Comprobar autorización de ADMIN
-    public Map<Integer, Usuario> getUsuarios(){
+    public Map<Integer, Usuario> getUsuarios(@RequestHeader("Authorization") String token){
         //FALTA IF DE AUTORIZACIÓN
         return usuarios;
+    }
+
+    ///  Métodos courts
+    // Falta añadir la autorización de admin
+    @PostMapping("/pistaPadel/courts")
+    public Pista crearPista(@Valid @RequestBody Pista pista){
+        pistas.put(pista.idPista(), pista);
+        return pista;
+    }
+    @GetMapping("/pistaPadel/courts")
+    public List<Pista> listarPistas(){
+        return pistas.values()
+                .stream() // Permite el procesamiento de datos
+                .filter(p -> p.isActive()) // Filtro para comprobar que está activa
+                .toList(); // Para poder devolver el JSON
     }
 
 }
