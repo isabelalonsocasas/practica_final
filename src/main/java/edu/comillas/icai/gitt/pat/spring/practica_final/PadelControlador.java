@@ -5,7 +5,6 @@ import edu.comillas.icai.gitt.pat.spring.practica_final.RECORDS.Reserva;
 import edu.comillas.icai.gitt.pat.spring.practica_final.RECORDS.Usuario;
 
 import jakarta.validation.Valid;
-import org.apache.coyote.Response;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
