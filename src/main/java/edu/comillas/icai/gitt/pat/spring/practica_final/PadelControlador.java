@@ -118,7 +118,7 @@ public class PadelControlador {
                             .stream()
                             .filter(r -> r.getIdPista().equals(p.getIdPista()) // Por cada reserva, mira si la pista coincide
                                     && r.getFecha().equals(fechaConsulta))
-                            .map(r -> Map.<String,String>of(
+                            .map(r -> Map.of(
                                     "horaInicio", r.getHoraInicio().toString(), // Pasamos a String porque es LocalDate y queremos un mapa de String,String
                                     "horaFin", r.getHoraFin().toString() // Así se presentan visualmente mejor las horas de las reservas
                             ))
@@ -136,5 +136,40 @@ public class PadelControlador {
         return resultado;
 
 
+    }
+
+    @GetMapping("/pistaPadel/courts/{courtId}/availability")
+    public List<Map<String, String>> consultarDisponibilidadPista(@RequestParam String date,@PathVariable Integer courtId){
+        // Comprobamos fecha igual que en el método anterior
+        LocalDate fechaConsulta;
+        try {
+            fechaConsulta = LocalDate.parse(date.trim()); // Solo fecha
+        } catch (DateTimeParseException e) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Formato de fecha inválido, debe ser YYYY-MM-DD"
+            );
+        }
+
+        // Para lanzar el 404, comprobamos que existe la pista
+        Pista pista = pistas.get(courtId);
+        if (pista == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "La pista con id " + courtId + " no existe"
+            );
+        }
+
+        List<Map<String, String>> reservasPista = reservas.values()
+                .stream()
+                .filter(r -> r.getIdPista().equals(courtId)
+                        && r.getFecha().equals(fechaConsulta))
+                .map(r -> Map.of(
+                        "horaInicio", r.getHoraInicio().toString(),
+                        "horaFin", r.getHoraFin().toString()
+                ))
+                .toList();
+
+        return reservasPista;
     }
 }
