@@ -64,6 +64,7 @@ public class PadelControlador {
         pistas.put(pista.idPista(), pista);
         return pista;
     }
+
     @GetMapping("/pistaPadel/courts")
     public List<Pista> listarPistas(){
         return pistas.values()
@@ -72,4 +73,17 @@ public class PadelControlador {
                 .toList(); // Para poder devolver el JSON
     }
 
+    @GetMapping("/pistaPadel/courts/{courtId}")
+    public Pista getInfoPista(@PathVariable Integer courtId){
+        Pista pista = pistas.get(courtId);
+
+        if (pista == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Pista no encontrada"
+            );
+        }
+        return pista;
+
+    }
 }
