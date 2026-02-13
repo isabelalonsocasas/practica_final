@@ -27,7 +27,7 @@ public class PadelControlador {
     }
 
     @PostMapping("/pistaPadel/auth/login")
-    public ResponseEntity<?> loginUsuario(@Valid @RequestBody Map<String, String> body){ //ResponseEntity para las respuestas. El @Valid da el 400 Bad Request
+    public ResponseEntity<Usuario> loginUsuario(@Valid @RequestBody Map<String, String> body){ //ResponseEntity para las respuestas. El @Valid da el 400 Bad Request
 
         // El sistema de login solo recibe el email y la contraseña
         String email = body.get("email");
