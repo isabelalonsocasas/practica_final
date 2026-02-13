@@ -28,6 +28,15 @@ public class PadelControlador {
     ///  Métodos auth usuario
     @PostMapping("/pistaPadel/auth/register")
     public Usuario registrarUsuario(@Valid @RequestBody Usuario NuevoUsuario) {
+        boolean emailExiste = usuarios.values().stream()
+                .anyMatch(u -> u.email().equals(NuevoUsuario.email()));
+
+        if (emailExiste) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "El email ya existe"
+            );
+        }
         usuarios.put(NuevoUsuario.idUsuario(), NuevoUsuario);
         return NuevoUsuario;
     }
