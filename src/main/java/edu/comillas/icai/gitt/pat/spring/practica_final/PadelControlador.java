@@ -20,12 +20,14 @@ public class PadelControlador {
     private final Map<Integer, Pista> pistas = new HashMap<>();
     private final Map<Integer, Reserva> reservas = new HashMap<>();
 
+    ///  Métodos auth usuario
     @PostMapping("/pistaPadel/auth/register")
     public Usuario registrarUsuario(@Valid @RequestBody Usuario NuevoUsuario) {
         usuarios.put(NuevoUsuario.idUsuario(), NuevoUsuario);
         return NuevoUsuario;
     }
 
+    // Cambiar a auth
     @PostMapping("/pistaPadel/auth/login")
     public ResponseEntity<Usuario> loginUsuario(@Valid @RequestBody Map<String, String> body){ //ResponseEntity para las respuestas. El @Valid da el 400 Bad Request
 
@@ -39,6 +41,18 @@ public class PadelControlador {
             }
         }
         throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales incorrectas"); // Lanzamos la excepcion para ser caputurada por el controlador Global de Errores
+    }
+
+    @PostMapping("/pistaPadel/auth/logout")
+    public void logoutUsuario(@Valid @RequestBody Map<String, String> body){
+    }
+
+
+    /// Métodos users
+    @GetMapping("/pistaPadel/users") // Comprobar autorización de ADMIN
+    public Map<Integer, Usuario> getUsuarios(){
+        //FALTA IF DE AUTORIZACIÓN
+        return usuarios;
     }
 
 }
