@@ -35,4 +35,12 @@ public record Pista(
     public boolean isActive() {
         return activa;
     }
+
+    public Object getIdPista() {
+        return idPista;
+    }
+
+    public Object getNombre() {
+        return nombre;
+    }
 }

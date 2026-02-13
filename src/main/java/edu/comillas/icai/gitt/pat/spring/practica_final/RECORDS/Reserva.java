@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
@@ -18,7 +19,7 @@ public record Reserva(
         int idPista,
 
         @NotNull
-        LocalDateTime fechaReserva,
+        LocalDate fechaReserva,
 
         @NotNull
         LocalTime horaInicio,
@@ -34,6 +35,22 @@ public record Reserva(
         @NotNull
         LocalDateTime fechaCreacion
 ) {
+    public Integer getIdPista() {
+        return idPista;
+    }
+
+    public LocalDate getFecha() {
+        return fechaReserva;
+    }
+
+    public LocalTime getHoraInicio() {
+        return horaInicio;
+    }
+
+    public LocalTime getHoraFin() {
+        return horaFin;
+    }
+
     public enum Estado {
         ACTIVA,
         CANCELADA

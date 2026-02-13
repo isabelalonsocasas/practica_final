@@ -11,6 +11,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -84,6 +88,53 @@ public class PadelControlador {
             );
         }
         return pista;
+
+    }
+
+
+    /// Métodos availability
+
+    @GetMapping("/pistaPadel/availability")
+    public List<Map<String, Object>> consultarDisponibilidad(@RequestParam String date, @RequestParam(required = false) Integer courtId) {
+        LocalDate fechaConsulta;
+        try {
+            fechaConsulta = LocalDate.parse(date);
+        } catch (DateTimeParseException e) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Formato de fecha inválido, debe ser YYYY-MM-DD"
+            );
+        }
+
+        List<Map<String, Object>> resultado = new ArrayList<>();
+
+        // Filtramos las pistas con el id requerido,
+        pistas.values().stream()
+                .filter(p -> courtId == null || p.getIdPista().equals(courtId))
+                .forEach(p -> {
+
+                    // Hacemos una lista con la pista y sus reservas con sus respectivas horas
+                    List<Map<String, String>> reservasPista = reservas.values()
+                            .stream()
+                            .filter(r -> r.getIdPista().equals(p.getIdPista()) // Por cada reserva, mira si la pista coincide
+                                    && r.getFecha().equals(fechaConsulta))
+                            .map(r -> Map.<String,String>of(
+                                    "horaInicio", r.getHoraInicio().toString(), // Pasamos a String porque es LocalDate y queremos un mapa de String,String
+                                    "horaFin", r.getHoraFin().toString() // Así se presentan visualmente mejor las horas de las reservas
+                            ))
+                            .toList();
+
+                    // Construir objeto de respuesta
+                    Map<String, Object> pistaInfo = new HashMap<>();
+                    pistaInfo.put("idPista", p.getIdPista());
+                    pistaInfo.put("nombre", p.getNombre());
+                    pistaInfo.put("reservas", reservasPista);
+
+                    resultado.add(pistaInfo);
+                });
+
+        return resultado;
+
 
     }
 }
