@@ -38,7 +38,7 @@ public class PadelControlador {
                 return ResponseEntity.ok(u); // 200 OK, devuelve el usuario 'u' en el body de la respuesta
             }
         }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciales incorrectas"); // 401. El .status permite devolver un código HTTP, una explicación completa del error.
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales incorrectas"); // Lanzamos la excepcion para ser caputurada por el controlador Global de Errores
     }
 
 }
