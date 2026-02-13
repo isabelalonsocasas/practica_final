@@ -31,7 +31,7 @@ public class PadelControlador {
 
     ///  Métodos auth usuario
     @PostMapping("/pistaPadel/auth/register")
-    public Usuario registrarUsuario(@Valid @RequestBody Usuario NuevoUsuario) {
+    public ResponseEntity<Usuario> registrarUsuario(@Valid @RequestBody Usuario NuevoUsuario) {
         boolean emailExiste = usuarios.values().stream()
                 .anyMatch(u -> u.email().equals(NuevoUsuario.email()));
 
@@ -42,7 +42,8 @@ public class PadelControlador {
             );
         }
         usuarios.put(NuevoUsuario.idUsuario(), NuevoUsuario);
-        return NuevoUsuario;
+        return ResponseEntity.status(HttpStatus.CREATED).body(NuevoUsuario); //Refleja 201 created y el usuario
+
     }
 
     // Cambiar a auth. Quitar ResponseEntity<Usuario>
