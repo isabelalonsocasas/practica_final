@@ -100,7 +100,7 @@ public class PadelControlador {
         return almacen.usuarios();
     }
 
-    //Get user si eres admin o si eres el usuario autenticado
+    //Get user si eres admin o si eres el usuario autenticado (completado)
     @GetMapping("/pistaPadel/users/{userId}")
     public ResponseEntity<Usuario> obtenerUsuario( @PathVariable Integer userId, Authentication authentication) {
 
