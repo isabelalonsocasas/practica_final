@@ -35,22 +35,6 @@ public record Reserva(
         @NotNull
         LocalDateTime fechaCreacion
 ) {
-    public Integer getIdPista() {
-        return idPista;
-    }
-
-    public LocalDate getFecha() {
-        return fechaReserva;
-    }
-
-    public LocalTime getHoraInicio() {
-        return horaInicio;
-    }
-
-    public LocalTime getHoraFin() {
-        return horaFin;
-    }
-
     public enum Estado {
         ACTIVA,
         CANCELADA
@@ -62,7 +46,7 @@ public record Reserva(
         }
         
         if (horaFin == null) {
-            horaFin = horaInicio().plusMinutes(duracionMinutos);
+            horaFin = horaInicio.plusMinutes(duracionMinutos);
         }
     }
     public Reserva(int idReserva, int idUsuario, int idPista, LocalDate fechaReserva, LocalTime horaInicio, int duracionMinutos) {
