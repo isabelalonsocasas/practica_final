@@ -59,7 +59,7 @@ public class ControladorGlobalDeErrores {
         return ResponseEntity.status(status).body(bodyerror);
     }
 
-    //Errores generales internos dek sistema 500
+    //Errores generales internos del sistema 500
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ModeloError> ControladorGeneralException (ResponseStatusException ex, HttpServletRequest request) {
 
