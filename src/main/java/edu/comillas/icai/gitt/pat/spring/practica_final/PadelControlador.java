@@ -18,10 +18,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @RestController
@@ -273,6 +270,24 @@ public class PadelControlador {
 
         reservas.put(nueva.idReserva(), nueva);
         return nueva;
+    }
+
+    @GetMapping("/pistaPadel/admin/reservations")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Reserva>> getReservas(
+            @RequestParam(required = false) LocalDate date,
+            @RequestParam(required = false) Integer courtId,
+            @RequestParam(required = false) Integer userId) {
+
+        List<Reserva> reservas = new ArrayList<>(almacen.reservas().values());
+
+        List<Reserva> reservasFiltro = reservas.stream()
+                .filter(r -> date == null || r.fechaReserva().toString().equals(date))
+                .filter(r -> courtId == null || r.idPista() == courtId)
+                .filter(r -> userId == null || r.idUsuario() ==userId)
+                .toList();
+
+        return ResponseEntity.ok(reservasFiltro);
     }
 }
 
