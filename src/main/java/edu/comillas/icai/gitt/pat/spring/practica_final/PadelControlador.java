@@ -185,6 +185,7 @@ public class PadelControlador {
 
     ///  Métodos courts
     // Falta añadir la autorización de admin
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/pistaPadel/courts")
     public ResponseEntity<Pista> crearPista(@Valid @RequestBody Pista pista) {
 
