@@ -50,7 +50,7 @@ public class ConfiguracionSeguridad {
                 .requestMatchers("/pistaPadel/auth/register").permitAll() //No es necesario para el registro
                 .requestMatchers("/pistaPadel/auth/login").permitAll() //Se permite para loggearte
                 .anyRequest().authenticated() );//Las demás rutas exigen login
-        //LOGGIN
+        //LOGIN
         http.formLogin(form -> form
                 .loginProcessingUrl("/pistaPadel/auth/login") //Definimos la URL
                 .successHandler((req, res, auth) -> res.setStatus(HttpStatus.OK.value()))
