@@ -29,4 +29,12 @@ public class AlmacenDatos
             return reservas;
     }
 
+    //Metodo para el log in
+    public Usuario buscarPorEmail(String email) {
+        return usuarios.values().stream()
+                .filter(u -> u.email().equalsIgnoreCase(email))
+                .findFirst()
+                .orElse(null);
+    }
+
 }
