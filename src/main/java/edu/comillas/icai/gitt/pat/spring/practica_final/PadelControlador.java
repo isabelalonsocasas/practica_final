@@ -202,8 +202,8 @@ public class PadelControlador {
 
 
     @GetMapping("/pistaPadel/courts")
-    public List<Pista> listarPistas(){
-        return pistas.values()
+    public List<Pista> listarPistas(@RequestParam(required = false) Boolean active){
+        return almacen.pistas().values()
                 .stream() // Permite el procesamiento de datos
                 .filter(p -> p.isActive()) // Filtro para comprobar que está activa
                 .toList(); // Para poder devolver el JSON
