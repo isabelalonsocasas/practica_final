@@ -130,7 +130,7 @@ public class PadelControlador {
         return ResponseEntity.ok(usuario);
     }
 
-    //Patch actualizar datos de usuario
+    //Patch actualizar datos de usuario (completado)
     @PatchMapping("/pistaPadel/users/{userId}")
     public ResponseEntity<Usuario> actualizarUsuario( @PathVariable int userId, @Valid @RequestBody Usuario datosActualizados, Authentication authentication) {
 
@@ -140,7 +140,7 @@ public class PadelControlador {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no existe");
         }
 
-        // Permisos: ADMIN o dueño
+        // Comprueba si tiene persmisos por usuario igual o por administador
         String emailAutenticado = authentication.getName();
         Usuario usuarioAutenticado = almacen.buscarPorEmail(emailAutenticado);
 
