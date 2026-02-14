@@ -221,6 +221,32 @@ public class PadelControlador {
 
     }
 
+    //Editar una pista (completo)
+    @PreAuthorize("hasRole('ADMIN')")
+    @PatchMapping("/pistaPadel/courts/{courtId}")
+    public ResponseEntity<Pista> actualizarPista( @PathVariable int courtId, @Valid @RequestBody Pista datosActualizados) {
+
+        Pista pista = almacen.pistas().get(courtId);
+        if (pista == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Pista no encontrada");
+        }
+
+        // Actualizar la nueva pista
+        Pista actualizada = new Pista(
+                courtId,
+                datosActualizados.nombre(),
+                datosActualizados.ubicacion(),
+                datosActualizados.precioHora(),
+                datosActualizados.activa(),
+                pista.fechaAlta() //No tiene sentido cambiar la fecha de alta
+        );
+
+        almacen.pistas().put(courtId, actualizada);
+
+        return ResponseEntity.ok(actualizada);
+    }
+
+
 
     /// Métodos availability
 
