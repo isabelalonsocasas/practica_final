@@ -99,6 +99,37 @@ public class PadelControlador {
         return almacen.usuarios();
     }
 
+    //Get user si eres admin o si eres el usuario autenticado
+    @GetMapping("/pistaPadel/users/{userId}")
+    public ResponseEntity<Usuario> obtenerUsuario( @PathVariable Integer userId, Authentication authentication) {
+
+        Usuario usuario = almacen.usuarios().get(userId); //Buscamos en el almacen el usuario
+
+        if (usuario == null) {
+            throw new ResponseStatusException( HttpStatus.NOT_FOUND, "Usuario no existe"); //Si no esta el usuario se lanza error
+        }
+
+        // Cogemos las creedenciales del login
+        String emailAutenticado = authentication.getName();
+        Usuario usuarioAutenticado = almacen.buscarPorEmail(emailAutenticado);
+
+        // Comprobamos si es admin
+        boolean esAdmin = authentication.getAuthorities()
+                .stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        // Comprobar si es el dueño del id el que se ha autenticado
+        boolean esDueno = usuarioAutenticado.idUsuario()==userId;
+
+        // Si no es admin ni dueño se prohibe el acceso error (403)
+        if (!esAdmin && !esDueno) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No autorizado");
+        }
+
+        return ResponseEntity.ok(usuario);
+    }
+
+
     ///  Métodos courts
     // Falta añadir la autorización de admin
     @PostMapping("/pistaPadel/courts")
