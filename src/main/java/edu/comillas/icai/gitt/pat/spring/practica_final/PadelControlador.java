@@ -41,7 +41,7 @@ public class PadelControlador {
     ///  Métodos auth usuario
     @PostMapping("/pistaPadel/auth/register")
     public ResponseEntity<Usuario> registrarUsuario(@Valid @RequestBody Usuario NuevoUsuario) {
-        boolean emailExiste = usuarios.values().stream()
+        boolean emailExiste = almacen.usuarios().values().stream()
                 .anyMatch(u -> u.email().equals(NuevoUsuario.email()));
 
         if (emailExiste) {
