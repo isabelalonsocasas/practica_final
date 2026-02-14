@@ -385,5 +385,65 @@ public class PadelControlador {
 
         return ResponseEntity.ok(reservasFiltro);
     }
+
+    @DeleteMapping("/pistaPadel/reservations/{reservationId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void cancelarReserva(@PathVariable int reservationId, Authentication authentication) {
+
+        // 404: no existe
+        Reserva actual = almacen.reservas().get(reservationId);
+        if (actual == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Reserva no existe");
+        }
+
+        // usuario autenticado (por email)
+        String emailAutenticado = authentication.getName();
+        Usuario usuarioAutenticado = almacen.buscarPorEmail(emailAutenticado);
+
+        // ¿admin?
+        boolean esAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        // ¿dueño?
+        boolean esDueno = (usuarioAutenticado != null) && (actual.idUsuario() == usuarioAutenticado.idUsuario());
+
+        // 403: si no es admin ni dueño
+        if (!esAdmin && !esDueno) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No autorizado");
+        }
+
+        // 409: ya cancelada
+        if (actual.estado() == Reserva.Estado.CANCELADA) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "La reserva ya está cancelada");
+        }
+
+        // 409: política mínima (no cancelar si ya ha empezado)
+        if (yaHaEmpezado(actual)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede cancelar por política");
+        }
+
+        // Cancelar: record inmutable -> crear copia con estado CANCELADA
+        Reserva cancelada = new Reserva(
+                actual.idReserva(),
+                actual.idUsuario(),
+                actual.idPista(),
+                actual.fechaReserva(),
+                actual.horaInicio(),
+                actual.duracionMinutos(),
+                actual.horaFin(),
+                Reserva.Estado.CANCELADA,
+                actual.fechaCreacion()
+        );
+
+        almacen.reservas().put(reservationId, cancelada);
+    }
+
+    private boolean yaHaEmpezado(Reserva r) {
+        LocalDateTime inicio = LocalDateTime.of(r.fechaReserva(), r.horaInicio());
+        return inicio.isBefore(LocalDateTime.now());
+    }
+
+
+
 }
 
