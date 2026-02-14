@@ -99,10 +99,21 @@ public class PadelControlador {
 
     ///  Métodos courts
     // Falta añadir la autorización de admin
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/pistaPadel/courts")
-    public Pista crearPista(@Valid @RequestBody Pista pista){
-        pistas.put(pista.idPista(), pista);
-        return pista;
+    public ResponseEntity<Pista> crearPista(@Valid @RequestBody Pista pista){
+        // Comprobar si el nombre de la pista existe
+        boolean nombreDuplicado = almacen.pistas().values().stream()
+                .anyMatch(p -> p.nombre().equals(pista.nombre()));
+
+        if (nombreDuplicado) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "El nombre de la pista ya existe");
+        }
+
+        // Añadir al almacen de pistas
+        almacen.pistas().put(pista.idPista(), pista);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(pista);
     }
 
     @GetMapping("/pistaPadel/courts")
