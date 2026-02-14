@@ -187,7 +187,7 @@ public class PadelControlador {
     }
 
     //Reservations
-    private final AtomicInteger nextReservaId = new AtomicInteger(1);
+      private final AtomicInteger nextReservaId = new AtomicInteger(1);
     private boolean haySolape(int idPista, LocalDate fechaReserva, LocalTime horaInicioNueva, int duracionMinutosNueva) {
 
         LocalTime horaFinNueva = horaInicioNueva.plusMinutes(duracionMinutosNueva);
