@@ -237,6 +237,8 @@ public class PadelControlador {
             @NotNull LocalTime horaInicio,
             @NotNull @Positive Integer duracionMinutos
     ) {}
+
+
     @PostMapping("/pistaPadel/reservations")
     @ResponseStatus(HttpStatus.CREATED)
     public Reserva crearReserva(@Valid @RequestBody ReservaBody reserva){
