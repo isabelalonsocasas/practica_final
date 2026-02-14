@@ -28,5 +28,5 @@ public class AlmacenDatos
     public Map<Integer, Reserva> reservas() {
             return reservas;
     }
-    
+
 }
