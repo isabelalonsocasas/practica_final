@@ -393,7 +393,7 @@ public class PadelControlador {
     @DeleteMapping("/pistaPadel/reservations/{reservationId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void cancelarReserva(@PathVariable int reservationId, Authentication authentication) {
-
+        
         // 404: no existe
         Reserva actual = almacen.reservas().get(reservationId);
         if (actual == null) {
