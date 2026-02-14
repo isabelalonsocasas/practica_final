@@ -205,7 +205,7 @@ public class PadelControlador {
     public List<Pista> listarPistas(@RequestParam(required = false) Boolean active){
         return almacen.pistas().values()
                 .stream() // Permite el procesamiento de datos
-                .filter(p -> p.isActive()) // Filtro para comprobar que está activa
+                .filter(p -> active == null || p.activa() == active) // Filtro para comprobar que está activa o no dependiendo del parametro
                 .toList(); // Para poder devolver el JSON
     }
 
