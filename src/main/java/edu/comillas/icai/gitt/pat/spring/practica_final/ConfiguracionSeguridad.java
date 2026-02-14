@@ -21,6 +21,25 @@ public class ConfiguracionSeguridad {
     }
 
     @Bean
+    public UserDetailsService userDetailsService() {
+        return username -> {
+
+            Usuario u = almacen.buscarPorEmail(username);
+
+            if (u == null) {
+                throw new UsernameNotFoundException("Usuario no encontrado");
+            }
+
+            return User.withDefaultPasswordEncoder()
+                    .username(u.email())
+                    .password(u.password()) // contraseña en texto plano
+                    .roles(u.rol().nombreRol().name()) // USER o ADMIN
+                    .build();
+        };
+    }
+
+
+    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http.csrf(csrf -> csrf.disable()); //Desactivar protección CSRF (Utilizamos PostMan no HTML)
