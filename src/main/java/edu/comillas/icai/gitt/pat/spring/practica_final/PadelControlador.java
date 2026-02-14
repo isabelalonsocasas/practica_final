@@ -184,7 +184,7 @@ public class PadelControlador {
 
 
     ///  Métodos courts
-    // Falta añadir la autorización de admin
+    //Crear nueva pista (completado)
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/pistaPadel/courts")
     public ResponseEntity<Pista> crearPista(@Valid @RequestBody Pista pista) {
@@ -199,7 +199,7 @@ public class PadelControlador {
 
         // Guardar pista
         almacen.pistas().put(pista.idPista(), pista);
-        
+
         return ResponseEntity.status(HttpStatus.CREATED).body(pista);
     }
 
