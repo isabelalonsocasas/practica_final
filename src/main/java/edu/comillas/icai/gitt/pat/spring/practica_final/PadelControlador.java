@@ -130,7 +130,7 @@ public class PadelControlador {
         return ResponseEntity.ok(usuario);
     }
 
-    //Patch utilizar datos de usuario
+    //Patch actualizar datos de usuario
     @PatchMapping("/pistaPadel/users/{userId}")
     public ResponseEntity<Usuario> actualizarUsuario( @PathVariable int userId, @Valid @RequestBody Usuario datosActualizados, Authentication authentication) {
 
