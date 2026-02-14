@@ -270,7 +270,7 @@ public class PadelControlador {
                 pista.nombre(),
                 pista.ubicacion(),
                 pista.precioHora(),
-                false,                // activa = false
+                false,        
                 pista.fechaAlta()
         );
 
