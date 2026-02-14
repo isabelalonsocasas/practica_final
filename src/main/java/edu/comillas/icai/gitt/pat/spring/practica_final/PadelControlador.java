@@ -246,6 +246,38 @@ public class PadelControlador {
         return ResponseEntity.ok(actualizada);
     }
 
+    //Desactivar una pista (completo)
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/pistaPadel/courts/{courtId}")
+    public ResponseEntity<Void> desactivarPista(@PathVariable int courtId) {
+
+        Pista pista = almacen.pistas().get(courtId);
+        if (pista == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Pista no encontrada");
+        }
+
+        // Por si hay reservar futuras comprobamos
+        boolean hayReservasFuturas = almacen.reservas().values().stream()
+                .anyMatch(r -> r.idPista() == courtId && r.fechaReserva().isAfter(LocalDate.now()));
+
+        if (hayReservasFuturas) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede desactivar: hay reservas futuras");
+        }
+
+        //Actualizamos la pista como desactivada con el false
+        Pista desactivada = new Pista(
+                pista.idPista(),
+                pista.nombre(),
+                pista.ubicacion(),
+                pista.precioHora(),
+                false,                // activa = false
+                pista.fechaAlta()
+        );
+
+        almacen.pistas().put(courtId, desactivada);
+
+        return ResponseEntity.noContent().build();
+    }
 
 
     /// Métodos availability
