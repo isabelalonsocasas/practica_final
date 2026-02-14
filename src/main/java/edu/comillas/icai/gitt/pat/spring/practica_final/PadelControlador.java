@@ -209,17 +209,15 @@ public class PadelControlador {
                 .toList(); // Para poder devolver el JSON
     }
 
+    //Obtener información de una pista (completo)
     @GetMapping("/pistaPadel/courts/{courtId}")
-    public Pista getInfoPista(@PathVariable Integer courtId){
-        Pista pista = pistas.get(courtId);
+    public ResponseEntity<Pista>  getInfoPista(@PathVariable Integer courtId){
+        Pista pista = almacen.pistas().get(courtId);
 
         if (pista == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "Pista no encontrada"
-            );
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Pista no encontrada");
         }
-        return pista;
+        return ResponseEntity.ok(pista);
 
     }
 
