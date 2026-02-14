@@ -130,6 +130,58 @@ public class PadelControlador {
         return ResponseEntity.ok(usuario);
     }
 
+    //Patch utilizar datos de usuario
+    @PatchMapping("/pistaPadel/users/{userId}")
+    public ResponseEntity<Usuario> actualizarUsuario( @PathVariable int userId, @Valid @RequestBody Usuario datosActualizados, Authentication authentication) {
+
+        // Busca en el almacen a ver si se encuentra el usuario
+        Usuario usuario = almacen.usuarios().get(userId);
+        if (usuario == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no existe");
+        }
+
+        // Permisos: ADMIN o dueño
+        String emailAutenticado = authentication.getName();
+        Usuario usuarioAutenticado = almacen.buscarPorEmail(emailAutenticado);
+
+        boolean esAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        boolean esDueno = usuarioAutenticado.idUsuario() == userId;
+
+        if (!esAdmin && !esDueno) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No autorizado");
+        }
+
+        // Comprobar email duplicado solo si el usuario es distinto porque si es igual el id en principio tiene el mismo email
+        boolean emailDuplicado = almacen.usuarios().values().stream()
+                .anyMatch(u ->
+                        u.email().equals(datosActualizados.email()) && u.idUsuario() != userId );
+
+        if (emailDuplicado) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "El email ya existe");
+        }
+
+        // Crear nuevo usuario
+        Usuario actualizado = new Usuario(
+                userId,
+                datosActualizados.nombre(),
+                datosActualizados.apellidos(),
+                datosActualizados.email(),
+                datosActualizados.password(),
+                datosActualizados.telefono(),
+                usuario.rol(),
+                usuario.fechaRegistro(),
+                usuario.activo(),
+                usuario.reservas()
+        );
+
+        almacen.usuarios().put(userId, actualizado);
+
+        return ResponseEntity.ok(actualizado);
+    }
+
+
 
     ///  Métodos courts
     // Falta añadir la autorización de admin
