@@ -50,7 +50,7 @@ public class PadelControlador {
                     "El email ya existe"
             );
         }
-        usuarios.put(NuevoUsuario.idUsuario(), NuevoUsuario);
+        almacen.usuarios().put(NuevoUsuario.idUsuario(), NuevoUsuario);
         return ResponseEntity.status(HttpStatus.CREATED).body(NuevoUsuario); //Refleja 201 created y el usuario
 
     }
