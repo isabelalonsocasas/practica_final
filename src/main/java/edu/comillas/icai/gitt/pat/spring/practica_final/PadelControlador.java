@@ -24,6 +24,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @RestController
 public class PadelControlador {
+
+    //IMPORTAMOS NUESTRO ALMACEN DE DATOS
+    private final AlmacenDatos almacen;
+
+    public PadelControlador(AlmacenDatos almacen) {
+        this.almacen = almacen;
+    }
+
+
     private final Map<Integer, Usuario> usuarios = new HashMap<>();
     private final Map<Integer, Pista> pistas = new HashMap<>();
     private final Map<Integer, Reserva> reservas = new HashMap<>();
