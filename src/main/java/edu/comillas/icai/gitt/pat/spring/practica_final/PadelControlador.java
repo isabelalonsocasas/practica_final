@@ -103,6 +103,7 @@ public class PadelControlador {
     ///  Métodos courts
     // Falta añadir la autorización de admin
     @PostMapping("/pistaPadel/courts")
+    @ResponseStatus(HttpStatus.CREATED)
     public Pista crearPista(@Valid @RequestBody Pista pista){
         pistas.put(pista.idPista(), pista);
         return pista;
@@ -173,8 +174,6 @@ public class PadelControlador {
                 });
 
         return resultado;
-
-
     }
 
     @GetMapping("/pistaPadel/courts/{courtId}/availability")
@@ -273,6 +272,26 @@ public class PadelControlador {
 
         reservas.put(nueva.idReserva(), nueva);
         return nueva;
+    }
+
+
+    //ADMIN ver Reservas de todos con filtro Opcional
+    @GetMapping("/pistaPadel/admin/reservations")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Reserva>> getReservas(
+            @RequestParam(required = false) LocalDate date,
+            @RequestParam(required = false) Integer courtId,
+            @RequestParam(required = false) Integer userId ){
+
+        List<Reserva> reservas = new ArrayList<>(almacen.reservas().values());
+
+        List<Reserva> reservasFiltro = reservas.stream()
+                .filter(r -> date == null || r.fechaReserva().equals(date))
+                .filter(r -> courtId == null || r.idPista() == (courtId))
+                .filter(r -> userId == null || r.idUsuario() == (userId))
+                .toList();
+
+        return ResponseEntity.ok(reservasFiltro);
     }
 }
 
