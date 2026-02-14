@@ -90,10 +90,10 @@ public class PadelControlador {
     }
 
     /// Métodos users
-    @GetMapping("/pistaPadel/users") // Comprobar autorización de ADMIN
-    public Map<Integer, Usuario> getUsuarios(@RequestHeader("Authorization") String token){
-        //FALTA IF DE AUTORIZACIÓN
-        return usuarios;
+    @GetMapping("/pistaPadel/users")
+    @PreAuthorize("hasRole('ADMIN')")// Comprobar autorización de ADMIN
+    public Map<Integer, Usuario> getUsuarios(){
+        return almacen.usuarios();
     }
 
     ///  Métodos courts
