@@ -104,7 +104,7 @@ public class PadelControlador {
     // Falta añadir la autorización de admin
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/pistaPadel/courts")
-    public Pista crearPista(@Valid @RequestBody Pista pista){
+    public ResponseEntity<Pista> crearPista(@Valid @RequestBody Pista pista){
         // Comprobar si el nombre de la pista existe
         boolean nombreDuplicado = almacen.pistas().values().stream()
                 .anyMatch(p -> p.nombre().equals(pista.nombre()));
