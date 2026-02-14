@@ -91,7 +91,8 @@ public class PadelControlador {
         return ResponseEntity.ok(u);
     }
 
-    // Métodos users (completado)
+    /// Métodos users
+    // Get users(completado)
     @GetMapping("/pistaPadel/users")
     @PreAuthorize("hasRole('ADMIN')")// Comprobar autorización de ADMIN
     public Map<Integer, Usuario> getUsuarios(){
