@@ -80,7 +80,7 @@ public class PadelControlador {
     //public void logoutUsuario(@Valid @RequestBody Map<String, String> body){
     //}
 
-    //GET USUARIO AUTENTICADO
+    //GET USUARIO AUTENTICADO (completado)
     @GetMapping("/pistaPadel/auth/me")
     public ResponseEntity<Usuario> usuarioAutenticado(Authentication authentication) {
 
