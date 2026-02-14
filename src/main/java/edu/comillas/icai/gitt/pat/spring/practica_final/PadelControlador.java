@@ -248,11 +248,11 @@ public class PadelControlador {
                     // Hacemos una lista con la pista y sus reservas con sus respectivas horas
                     List<Map<String, String>> reservasPista = reservas.values()
                             .stream()
-                            .filter(r -> r.getIdPista().equals(p.getIdPista()) // Por cada reserva, mira si la pista coincide
-                                    && r.getFecha().equals(fechaConsulta))
+                            .filter(r -> r.idPista() == p.idPista() // Por cada reserva, mira si la pista coincide
+                                    && r.fechaReserva().equals(fechaConsulta))
                             .map(r -> Map.of(
-                                    "horaInicio", r.getHoraInicio().toString(), // Pasamos a String porque es LocalDate y queremos un mapa de String,String
-                                    "horaFin", r.getHoraFin().toString() // Así se presentan visualmente mejor las horas de las reservas
+                                    "horaInicio", r.horaInicio().toString(), // Pasamos a String porque es LocalDate y queremos un mapa de String,String
+                                    "horaFin", r.horaFin().toString() // Así se presentan visualmente mejor las horas de las reservas
                             ))
                             .toList();
 
@@ -294,11 +294,11 @@ public class PadelControlador {
 
         List<Map<String, String>> reservasPista = reservas.values()
                 .stream()
-                .filter(r -> r.getIdPista().equals(courtId)
-                        && r.getFecha().equals(fechaConsulta))
+                .filter(r -> r.idPista() == courtId
+                        && r.fechaReserva().equals(fechaConsulta))
                 .map(r -> Map.of(
-                        "horaInicio", r.getHoraInicio().toString(),
-                        "horaFin", r.getHoraFin().toString()
+                        "horaInicio", r.horaInicio().toString(),
+                        "horaFin", r.horaFin().toString()
                 ))
                 .toList();
 
@@ -311,13 +311,13 @@ public class PadelControlador {
 
         LocalTime horaFinNueva = horaInicioNueva.plusMinutes(duracionMinutosNueva);
 
-        for (Reserva reservaExistente : reservas.values()) {
+        for (Reserva reservaExistente : almacen.reservas().values()) {
 
             if (reservaExistente.idPista() != idPista) continue;
             if (!reservaExistente.fechaReserva().equals(fechaReserva)) continue;
 
             LocalTime horaInicioExistente = reservaExistente.horaInicio();
-            LocalTime horaFinExistente    = reservaExistente.horaFin(); // ya calculada en Reserva
+            LocalTime horaFinExistente = reservaExistente.horaFin(); // ya calculada en Reserva
 
             // Solape si: inicioExistente < finNuevo  Y  finExistente > inicioNuevo
             boolean solapa = horaInicioExistente.isBefore(horaFinNueva)
@@ -340,9 +340,13 @@ public class PadelControlador {
     @ResponseStatus(HttpStatus.CREATED)
     public Reserva crearReserva(@Valid @RequestBody ReservaBody reserva){
         // 404: la pista no existe
-        if (!pistas.containsKey(reserva.idPista())) {
+        if (!almacen.pistas().containsKey(reserva.idPista())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Pista no existe");
         }
+
+        // EL CHIVATO: Esto te dirá por consola si hay datos ocultos
+        System.out.println("Reservas ocultas en el almacén: " + almacen.reservas().size());
+        System.out.println("Hora recibida en el JSON: " + reserva.horaInicio());
 
         // 409: slot ocupado (mismo courtId + misma fecha + solape horario)
         if (haySolape(reserva.idPista(), reserva.fechaReserva(), reserva.horaInicio(), reserva.duracionMinutos())) {
@@ -364,23 +368,23 @@ public class PadelControlador {
                 reserva.duracionMinutos()
         );
 
-        reservas.put(nueva.idReserva(), nueva);
+        almacen.reservas().put(nueva.idReserva(), nueva);
         return nueva;
     }
 
     @GetMapping("/pistaPadel/admin/reservations")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Reserva>> getReservas(
-            @RequestParam(required = false) LocalDate date,
-            @RequestParam(required = false) Integer courtId,
-            @RequestParam(required = false) Integer userId) {
+            @RequestParam(required = false) LocalDate fecha,
+            @RequestParam(required = false) Integer pista,
+            @RequestParam(required = false) Integer user) {
 
         List<Reserva> reservas = new ArrayList<>(almacen.reservas().values());
 
         List<Reserva> reservasFiltro = reservas.stream()
-                .filter(r -> date == null || r.fechaReserva().toString().equals(date))
-                .filter(r -> courtId == null || r.idPista() == courtId)
-                .filter(r -> userId == null || r.idUsuario() ==userId)
+                .filter(r -> fecha == null || r.fechaReserva().toString().equals(fecha))
+                .filter(r -> pista == null || r.idPista() == pista)
+                .filter(r -> user == null || r.idUsuario() == user)
                 .toList();
 
         return ResponseEntity.ok(reservasFiltro);
