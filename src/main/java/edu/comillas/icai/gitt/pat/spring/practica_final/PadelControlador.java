@@ -40,6 +40,8 @@ public class PadelControlador {
     private final Map<String, Usuario> sesiones = new HashMap<>();
 
     ///  Métodos auth usuario
+
+    //Registrarse (completado)
     @PostMapping("/pistaPadel/auth/register")
     public ResponseEntity<Usuario> registrarUsuario(@Valid @RequestBody Usuario NuevoUsuario) {
         boolean emailExiste = almacen.usuarios().values().stream()
@@ -78,7 +80,7 @@ public class PadelControlador {
     //public void logoutUsuario(@Valid @RequestBody Map<String, String> body){
     //}
 
-    //GET USUARIO AUTENTICADO
+    //GET USUARIO AUTENTICADO (completado)
     @GetMapping("/pistaPadel/auth/me")
     public ResponseEntity<Usuario> usuarioAutenticado(Authentication authentication) {
 
@@ -90,10 +92,11 @@ public class PadelControlador {
     }
 
     /// Métodos users
-    @GetMapping("/pistaPadel/users") // Comprobar autorización de ADMIN
-    public Map<Integer, Usuario> getUsuarios(@RequestHeader("Authorization") String token){
-        //FALTA IF DE AUTORIZACIÓN
-        return usuarios;
+    // Get users(completado)
+    @GetMapping("/pistaPadel/users")
+    @PreAuthorize("hasRole('ADMIN')")// Comprobar autorización de ADMIN
+    public Map<Integer, Usuario> getUsuarios(){
+        return almacen.usuarios();
     }
 
     ///  Métodos courts
