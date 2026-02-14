@@ -200,12 +200,12 @@ public class PadelControlador {
         return ResponseEntity.status(HttpStatus.CREATED).body(pista);
     }
 
-
+    //Listar las pistas, según parámetro de pista activa o inactiva (completo)
     @GetMapping("/pistaPadel/courts")
-    public List<Pista> listarPistas(){
-        return pistas.values()
+    public List<Pista> listarPistas(@RequestParam(required = false) Boolean active){
+        return almacen.pistas().values()
                 .stream() // Permite el procesamiento de datos
-                .filter(p -> p.isActive()) // Filtro para comprobar que está activa
+                .filter(p -> active == null || p.activa() == active) // Filtro para comprobar que está activa o no dependiendo del parametro
                 .toList(); // Para poder devolver el JSON
     }
 
