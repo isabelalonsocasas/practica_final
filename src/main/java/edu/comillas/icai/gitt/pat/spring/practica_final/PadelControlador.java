@@ -97,12 +97,96 @@ public class PadelControlador {
         return almacen.usuarios();
     }
 
+    //Get user si eres admin o si eres el usuario autenticado (completado)
+    @GetMapping("/pistaPadel/users/{userId}")
+    public ResponseEntity<Usuario> obtenerUsuario( @PathVariable Integer userId, Authentication authentication) {
+
+        Usuario usuario = almacen.usuarios().get(userId); //Buscamos en el almacen el usuario
+
+        if (usuario == null) {
+            throw new ResponseStatusException( HttpStatus.NOT_FOUND, "Usuario no existe"); //Si no esta el usuario se lanza error
+        }
+
+        // Cogemos las creedenciales del login
+        String emailAutenticado = authentication.getName();
+        Usuario usuarioAutenticado = almacen.buscarPorEmail(emailAutenticado);
+
+        // Comprobamos si es admin
+        boolean esAdmin = authentication.getAuthorities()
+                .stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        // Comprobar si es el dueño del id el que se ha autenticado
+        boolean esDueno = usuarioAutenticado.idUsuario()==userId;
+
+        // Si no es admin ni dueño se prohibe el acceso error (403)
+        if (!esAdmin && !esDueno) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No autorizado");
+        }
+
+        return ResponseEntity.ok(usuario);
+    }
+
+    //Patch actualizar datos de usuario (completado)
+    @PatchMapping("/pistaPadel/users/{userId}")
+    public ResponseEntity<Usuario> actualizarUsuario( @PathVariable int userId, @Valid @RequestBody Usuario datosActualizados, Authentication authentication) {
+
+        // Busca en el almacen a ver si se encuentra el usuario
+        Usuario usuario = almacen.usuarios().get(userId);
+        if (usuario == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no existe");
+        }
+
+        // Comprueba si tiene persmisos por usuario igual o por administador
+        String emailAutenticado = authentication.getName();
+        Usuario usuarioAutenticado = almacen.buscarPorEmail(emailAutenticado);
+
+        boolean esAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        boolean esDueno = usuarioAutenticado.idUsuario() == userId;
+
+        if (!esAdmin && !esDueno) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No autorizado");
+        }
+
+        // Comprobar email duplicado solo si el usuario es distinto porque si es igual el id en principio tiene el mismo email
+        boolean emailDuplicado = almacen.usuarios().values().stream()
+                .anyMatch(u ->
+                        u.email().equals(datosActualizados.email()) && u.idUsuario() != userId );
+
+        if (emailDuplicado) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "El email ya existe");
+        }
+
+        // Crear nuevo usuario
+        Usuario actualizado = new Usuario(
+                userId,
+                datosActualizados.nombre(),
+                datosActualizados.apellidos(),
+                datosActualizados.email(),
+                datosActualizados.password(),
+                datosActualizados.telefono(),
+                usuario.rol(),
+                usuario.fechaRegistro(),
+                usuario.activo(),
+                usuario.reservas()
+        );
+
+        almacen.usuarios().put(userId, actualizado);
+
+        return ResponseEntity.ok(actualizado);
+    }
+
+
+
     ///  Métodos courts
-    // Falta añadir la autorización de admin
+    //Crear nueva pista (completado)
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/pistaPadel/courts")
-    public ResponseEntity<Pista> crearPista(@Valid @RequestBody Pista pista){
-        // Comprobar si el nombre de la pista existe
+    public ResponseEntity<Pista> crearPista(@Valid @RequestBody Pista pista) {
+
+        // Comprobar si no existe el nombre de la pista
         boolean nombreDuplicado = almacen.pistas().values().stream()
                 .anyMatch(p -> p.nombre().equals(pista.nombre()));
 
@@ -110,11 +194,12 @@ public class PadelControlador {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "El nombre de la pista ya existe");
         }
 
-        // Añadir al almacen de pistas
+        // Guardar pista
         almacen.pistas().put(pista.idPista(), pista);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(pista);
     }
+
 
     @GetMapping("/pistaPadel/courts")
     public List<Pista> listarPistas(){
