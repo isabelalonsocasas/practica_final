@@ -40,8 +40,8 @@ public class PadelControlador {
     private final Map<String, Usuario> sesiones = new HashMap<>();
 
     ///  Métodos auth usuario
-    
-    //Registrase
+
+    //Registrarse (completado)
     @PostMapping("/pistaPadel/auth/register")
     public ResponseEntity<Usuario> registrarUsuario(@Valid @RequestBody Usuario NuevoUsuario) {
         boolean emailExiste = almacen.usuarios().values().stream()
