@@ -55,25 +55,27 @@ public class PadelControlador {
 
     }
 
+    //LOG IN EN CONFIGURACIÓN DE SEGURIDAD
     // Cambiar a auth. Quitar ResponseEntity<Usuario>
-    @PostMapping("/pistaPadel/auth/login")
-    public ResponseEntity<Usuario> loginUsuario(@Valid @RequestBody Map<String, String> body){ //ResponseEntity para las respuestas. El @Valid da el 400 Bad Request
+    //@PostMapping("/pistaPadel/auth/login")
+    //public ResponseEntity<Usuario> loginUsuario(@Valid @RequestBody Map<String, String> body){ //ResponseEntity para las respuestas. El @Valid da el 400 Bad Request
 
         // El sistema de login solo recibe el email y la contraseña
-        String email = body.get("email");
-        String password = body.get("password");
+        //String email = body.get("email");
+        //String password = body.get("password");
 
-        for (Usuario u :usuarios.values()){
-            if (u.getEmail().equals(email) && u.getPassword().equals(password)){
-                return ResponseEntity.ok(u); // 200 OK, devuelve el usuario 'u' en el body de la respuesta
-            }
-        }
-        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales incorrectas"); // Lanzamos la excepcion para ser caputurada por el controlador Global de Errores
-    }
+        //for (Usuario u :usuarios.values()){
+            //if (u.getEmail().equals(email) && u.getPassword().equals(password)){
+                //return ResponseEntity.ok(u); // 200 OK, devuelve el usuario 'u' en el body de la respuesta
+            //}
+        //}
+        //throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales incorrectas"); // Lanzamos la excepcion para ser caputurada por el controlador Global de Errores
+    //}
 
-    @PostMapping("/pistaPadel/auth/logout")
-    public void logoutUsuario(@Valid @RequestBody Map<String, String> body){
-    }
+    //LOG OUT EN CONFIGURACIÓN DE SEGURIDAD
+    //@PostMapping("/pistaPadel/auth/logout")
+    //public void logoutUsuario(@Valid @RequestBody Map<String, String> body){
+    //}
 
 
     /// Métodos users
