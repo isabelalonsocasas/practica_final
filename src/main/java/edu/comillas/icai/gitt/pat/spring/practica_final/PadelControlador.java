@@ -9,6 +9,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -16,23 +18,31 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @RestController
 public class PadelControlador {
+
+    //IMPORTAMOS NUESTRO ALMACEN DE DATOS
+    private final AlmacenDatos almacen;
+
+    public PadelControlador(AlmacenDatos almacen) {
+        this.almacen = almacen;
+    }
+
+
     private final Map<Integer, Usuario> usuarios = new HashMap<>();
     private final Map<Integer, Pista> pistas = new HashMap<>();
     private final Map<Integer, Reserva> reservas = new HashMap<>();
     private final Map<String, Usuario> sesiones = new HashMap<>();
 
     ///  Métodos auth usuario
+
+    //Registrarse (completado)
     @PostMapping("/pistaPadel/auth/register")
     public ResponseEntity<Usuario> registrarUsuario(@Valid @RequestBody Usuario NuevoUsuario) {
-        boolean emailExiste = usuarios.values().stream()
+        boolean emailExiste = almacen.usuarios().values().stream()
                 .anyMatch(u -> u.email().equals(NuevoUsuario.email()));
 
         if (emailExiste) {
@@ -41,45 +51,69 @@ public class PadelControlador {
                     "El email ya existe"
             );
         }
-        usuarios.put(NuevoUsuario.idUsuario(), NuevoUsuario);
+        almacen.usuarios().put(NuevoUsuario.idUsuario(), NuevoUsuario);
         return ResponseEntity.status(HttpStatus.CREATED).body(NuevoUsuario); //Refleja 201 created y el usuario
 
     }
 
+    //LOG IN EN CONFIGURACIÓN DE SEGURIDAD
     // Cambiar a auth. Quitar ResponseEntity<Usuario>
-    @PostMapping("/pistaPadel/auth/login")
-    public ResponseEntity<Usuario> loginUsuario(@Valid @RequestBody Map<String, String> body){ //ResponseEntity para las respuestas. El @Valid da el 400 Bad Request
+    //@PostMapping("/pistaPadel/auth/login")
+    //public ResponseEntity<Usuario> loginUsuario(@Valid @RequestBody Map<String, String> body){ //ResponseEntity para las respuestas. El @Valid da el 400 Bad Request
 
         // El sistema de login solo recibe el email y la contraseña
-        String email = body.get("email");
-        String password = body.get("password");
+        //String email = body.get("email");
+        //String password = body.get("password");
 
-        for (Usuario u :usuarios.values()){
-            if (u.getEmail().equals(email) && u.getPassword().equals(password)){
-                return ResponseEntity.ok(u); // 200 OK, devuelve el usuario 'u' en el body de la respuesta
-            }
-        }
-        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales incorrectas"); // Lanzamos la excepcion para ser caputurada por el controlador Global de Errores
+        //for (Usuario u :usuarios.values()){
+            //if (u.getEmail().equals(email) && u.getPassword().equals(password)){
+                //return ResponseEntity.ok(u); // 200 OK, devuelve el usuario 'u' en el body de la respuesta
+            //}
+        //}
+        //throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales incorrectas"); // Lanzamos la excepcion para ser caputurada por el controlador Global de Errores
+    //}
+
+    //LOG OUT EN CONFIGURACIÓN DE SEGURIDAD
+    //@PostMapping("/pistaPadel/auth/logout")
+    //public void logoutUsuario(@Valid @RequestBody Map<String, String> body){
+    //}
+
+    //GET USUARIO AUTENTICADO (completado)
+    @GetMapping("/pistaPadel/auth/me")
+    public ResponseEntity<Usuario> usuarioAutenticado(Authentication authentication) {
+
+        String email = authentication.getName(); // username = email
+
+        Usuario u = almacen.buscarPorEmail(email);
+
+        return ResponseEntity.ok(u);
     }
-
-    @PostMapping("/pistaPadel/auth/logout")
-    public void logoutUsuario(@Valid @RequestBody Map<String, String> body){
-    }
-
 
     /// Métodos users
-    @GetMapping("/pistaPadel/users") // Comprobar autorización de ADMIN
-    public Map<Integer, Usuario> getUsuarios(@RequestHeader("Authorization") String token){
-        //FALTA IF DE AUTORIZACIÓN
-        return usuarios;
+    // Get users(completado)
+    @GetMapping("/pistaPadel/users")
+    @PreAuthorize("hasRole('ADMIN')")// Comprobar autorización de ADMIN
+    public Map<Integer, Usuario> getUsuarios(){
+        return almacen.usuarios();
     }
 
     ///  Métodos courts
     // Falta añadir la autorización de admin
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/pistaPadel/courts")
-    public Pista crearPista(@Valid @RequestBody Pista pista){
-        pistas.put(pista.idPista(), pista);
-        return pista;
+    public ResponseEntity<Pista> crearPista(@Valid @RequestBody Pista pista){
+        // Comprobar si el nombre de la pista existe
+        boolean nombreDuplicado = almacen.pistas().values().stream()
+                .anyMatch(p -> p.nombre().equals(pista.nombre()));
+
+        if (nombreDuplicado) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "El nombre de la pista ya existe");
+        }
+
+        // Añadir al almacen de pistas
+        almacen.pistas().put(pista.idPista(), pista);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(pista);
     }
 
     @GetMapping("/pistaPadel/courts")
@@ -215,6 +249,8 @@ public class PadelControlador {
             @NotNull LocalTime horaInicio,
             @NotNull @Positive Integer duracionMinutos
     ) {}
+
+
     @PostMapping("/pistaPadel/reservations")
     @ResponseStatus(HttpStatus.CREATED)
     public Reserva crearReserva(@Valid @RequestBody ReservaBody reserva){
@@ -245,6 +281,24 @@ public class PadelControlador {
 
         reservas.put(nueva.idReserva(), nueva);
         return nueva;
+    }
+
+    @GetMapping("/pistaPadel/admin/reservations")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Reserva>> getReservas(
+            @RequestParam(required = false) LocalDate date,
+            @RequestParam(required = false) Integer courtId,
+            @RequestParam(required = false) Integer userId) {
+
+        List<Reserva> reservas = new ArrayList<>(almacen.reservas().values());
+
+        List<Reserva> reservasFiltro = reservas.stream()
+                .filter(r -> date == null || r.fechaReserva().toString().equals(date))
+                .filter(r -> courtId == null || r.idPista() == courtId)
+                .filter(r -> userId == null || r.idUsuario() ==userId)
+                .toList();
+
+        return ResponseEntity.ok(reservasFiltro);
     }
 }
 
