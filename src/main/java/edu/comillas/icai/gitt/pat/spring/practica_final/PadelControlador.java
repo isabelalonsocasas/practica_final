@@ -77,6 +77,16 @@ public class PadelControlador {
     //public void logoutUsuario(@Valid @RequestBody Map<String, String> body){
     //}
 
+    //GET USUARIO AUTENTICADO
+    @GetMapping("/pistaPadel/auth/me")
+    public ResponseEntity<Usuario> usuarioAutenticado(Authentication authentication) {
+
+        String email = authentication.getName(); // username = email
+
+        Usuario u = almacen.buscarPorEmail(email);
+
+        return ResponseEntity.ok(u);
+    }
 
     /// Métodos users
     @GetMapping("/pistaPadel/users") // Comprobar autorización de ADMIN
