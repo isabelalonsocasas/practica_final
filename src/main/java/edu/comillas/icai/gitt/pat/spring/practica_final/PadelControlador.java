@@ -566,7 +566,27 @@ public class PadelControlador {
                 .sorted(Comparator.comparing(Reserva::fechaReserva).thenComparing(Reserva::horaInicio))
                 .toList();
     }
-    
+    @GetMapping("/pistaPadel/reservations/{reservationId}")
+    public Reserva obtenerReserva(@PathVariable int reservationId, Authentication authentication){
+        Reserva r = almacen.reservas().get(reservationId);
+        if (r == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Reserva no existe");
+        }
+
+        String emailAutenticado = authentication.getName();
+        Usuario usuarioAutenticado = almacen.buscarPorEmail(emailAutenticado);
+
+        boolean esAdmin = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        boolean esDueno = (usuarioAutenticado != null) && (r.idUsuario() == usuarioAutenticado.idUsuario());
+
+        if (!esAdmin && !esDueno) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No autorizado");
+        }
+
+        return r; // => 200 OK con el JSON de la reserva
+    }
+
     ///  Tareas programadas
     @Scheduled(cron = "0 0 2 * * *")
     public void recordatorioReserva(){
