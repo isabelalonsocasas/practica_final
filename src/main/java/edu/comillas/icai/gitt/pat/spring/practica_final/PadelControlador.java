@@ -9,6 +9,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +24,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @RestController
+@EnableScheduling
 public class PadelControlador {
 
     //IMPORTAMOS NUESTRO ALMACEN DE DATOS
@@ -35,7 +38,6 @@ public class PadelControlador {
     private final Map<Integer, Usuario> usuarios = new HashMap<>();
     private final Map<Integer, Pista> pistas = new HashMap<>();
     private final Map<Integer, Reserva> reservas = new HashMap<>();
-    private final Map<String, Usuario> sesiones = new HashMap<>();
 
     ///  Métodos auth usuario
 
@@ -503,6 +505,25 @@ public class PadelControlador {
         return inicio.isBefore(LocalDateTime.now());
     }
 
+    ///  Tareas programadas
+    @Scheduled(cron = "0 0 2 * * *")
+    public void recordatorioReserva(){
+        LocalDate hoy = LocalDate.now();
+
+        for (Reserva r : reservas.values()){
+
+            if (r.fechaReserva().equals(hoy)) {
+
+                Usuario u = usuarios.get(r.idUsuario());
+                System.out.println("=================================");
+                System.out.println("EMAIL SIMULADO");
+                System.out.println("Para: " + u.email());
+                System.out.println("Asunto: Recordatorio Reserva");
+                System.out.println("Mensaje: Le recordamos su reserva de hoy día " + hoy + " a las " + r.horaInicio() +"h. Dispondrá de " + r.duracionMinutos() + " minutos de uso.");
+                System.out.println("=================================");
+            }
+        }
+    }
 
 
 }
