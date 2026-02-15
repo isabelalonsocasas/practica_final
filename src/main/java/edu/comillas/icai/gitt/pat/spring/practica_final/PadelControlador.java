@@ -314,7 +314,7 @@ public class PadelControlador {
                     while (!hora.isAfter(cierre)) {
 
 
-                        boolean ocupada = reservas.values().stream()
+                        boolean ocupada = almacen.reservas().values().stream()
                                 .anyMatch(r ->
                                         r.idPista() == p.idPista()
                                                 && r.fechaReserva().equals(fechaConsulta)
@@ -526,7 +526,7 @@ public class PadelControlador {
         return inicio.isBefore(LocalDateTime.now());
     }
 
-<<<<<<< HEAD
+
     @GetMapping("/pistaPadel/reservations")
     public List<Reserva> misReservas(
             @RequestParam(required = false) String from,
@@ -568,12 +568,10 @@ public class PadelControlador {
     }
 
 
-=======
     ///  Tareas programadas
     @Scheduled(cron = "0 0 2 * * *")
     public void recordatorioReserva(){
         LocalDate hoy = LocalDate.now();
->>>>>>> b8ba5e3afcf4399a952b91487d393f25f878736f
 
         for (Reserva r : reservas.values()){
 
