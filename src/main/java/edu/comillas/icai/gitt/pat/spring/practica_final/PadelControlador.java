@@ -298,7 +298,7 @@ public class PadelControlador {
 
         List<Map<String, Object>> resultado = new ArrayList<>();
 
-        // Filtramos las pistas con el id requerido,
+        // Filtramos las pistas por si se hubiese filtrado con courtId
         pistas.values().stream()
                 .filter(p -> courtId == null || p.getIdPista().equals(courtId))
                 .forEach(p -> {
@@ -363,7 +363,7 @@ public class PadelControlador {
         return reservasPista;
     }
 
-    //Reservations
+    /// Métodos Reservations
       private final AtomicInteger nextReservaId = new AtomicInteger(1);
     private boolean haySolape(int idPista, LocalDate fechaReserva, LocalTime horaInicioNueva, int duracionMinutosNueva) {
 
@@ -403,7 +403,7 @@ public class PadelControlador {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Pista no existe");
         }
 
-        // EL CHIVATO: Esto te dirá por consola si hay datos ocultos
+        // Esto muestra por consola si hay datos ocultos
         System.out.println("Reservas ocultas en el almacén: " + almacen.reservas().size());
         System.out.println("Hora recibida en el JSON: " + reserva.horaInicio());
 
