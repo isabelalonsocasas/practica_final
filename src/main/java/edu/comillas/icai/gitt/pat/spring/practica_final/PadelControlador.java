@@ -343,7 +343,7 @@ public class PadelControlador {
     }
 
     @GetMapping("/pistaPadel/courts/{courtId}/availability")
-    public List<Map<String, String>> consultarDisponibilidadPista(@RequestParam String date,@PathVariable Integer courtId){
+    public Map<String, Object> consultarDisponibilidadPista(@RequestParam String date,@PathVariable Integer courtId){
         // Comprobamos fecha igual que en el método anterior
         LocalDate fechaConsulta;
         try {
@@ -364,17 +364,41 @@ public class PadelControlador {
             );
         }
 
-        List<Map<String, String>> reservasPista = almacen.reservas().values()
-                .stream()
-                .filter(r -> r.idPista() == courtId
-                        && r.fechaReserva().equals(fechaConsulta))
-                .map(r -> Map.of(
-                        "horaInicio", r.horaInicio().toString(),
-                        "horaFin", r.horaFin().toString()
-                ))
-                .toList();
+        List<String> disponibilidad = new ArrayList<>();
 
-        return reservasPista;
+        LocalTime hora = LocalTime.of(9, 0);
+        LocalTime cierre = LocalTime.of(22, 0);
+
+        while (!hora.isAfter(cierre)) {
+
+            LocalTime siguiente = hora.plusMinutes(30);
+
+            final LocalTime horaSlot = hora;
+            final LocalTime siguienteSlot = siguiente;
+
+            boolean ocupada = almacen.reservas().values().stream()
+                    .anyMatch(r ->
+                            r.idPista() == pista.idPista()
+                                    && r.fechaReserva().equals(fechaConsulta)
+                                    && r.horaFin().isAfter(horaSlot)
+                                    && r.horaInicio().isBefore(siguienteSlot)
+                    );
+
+            String textoHora = hora.toString();
+
+            if (ocupada) {
+                textoHora += " ocupada";
+            }
+
+            disponibilidad.add(textoHora);
+            hora = siguiente;
+        }
+
+        Map<String, Object> infoPista = new HashMap<>();
+        infoPista.put("nombre", pista.nombre());
+        infoPista.put("disponibilidad", disponibilidad);
+
+        return infoPista;
     }
 
     /// Métodos Reservations
