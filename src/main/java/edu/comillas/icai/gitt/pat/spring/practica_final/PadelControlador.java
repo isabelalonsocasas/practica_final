@@ -34,6 +34,11 @@ public class PadelControlador {
         this.almacen = almacen;
     }
 
+
+    private final Map<Integer, Usuario> usuarios = new HashMap<>();
+    private final Map<Integer, Pista> pistas = new HashMap<>();
+    private final Map<Integer, Reserva> reservas = new HashMap<>();
+
     ///  Métodos auth usuario
 
     //Registrarse (completado)
@@ -344,7 +349,7 @@ public class PadelControlador {
     }
 
     @GetMapping("/pistaPadel/courts/{courtId}/availability")
-    public Map<String, Object> consultarDisponibilidadPista(@RequestParam String date,@PathVariable Integer courtId){
+    public List<Map<String, String>> consultarDisponibilidadPista(@RequestParam String date,@PathVariable Integer courtId){
         // Comprobamos fecha igual que en el método anterior
         LocalDate fechaConsulta;
         try {
@@ -357,7 +362,7 @@ public class PadelControlador {
         }
 
         // Para lanzar el 404, comprobamos que existe la pista
-        Pista pista = almacen.pistas().get(courtId);
+        Pista pista = pistas.get(courtId);
         if (pista == null) {
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND,
@@ -365,44 +370,17 @@ public class PadelControlador {
             );
         }
 
-        List<String> disponibilidad = new ArrayList<>();
+        List<Map<String, String>> reservasPista = reservas.values()
+                .stream()
+                .filter(r -> r.idPista() == courtId
+                        && r.fechaReserva().equals(fechaConsulta))
+                .map(r -> Map.of(
+                        "horaInicio", r.horaInicio().toString(),
+                        "horaFin", r.horaFin().toString()
+                ))
+                .toList();
 
-
-        // Fijamos la hora de apertura y de cierre
-        LocalTime hora = LocalTime.of(9, 0);
-        LocalTime cierre = LocalTime.of(22, 0);
-
-        while (!hora.isAfter(cierre)) {
-
-            LocalTime siguiente = hora.plusMinutes(30);
-
-            final LocalTime horaSlot = hora;
-            final LocalTime siguienteSlot = siguiente;
-
-            boolean ocupada = almacen.reservas().values().stream()
-                    .anyMatch(r -> r.idPista() == pista.idPista()
-                                    && r.fechaReserva().equals(fechaConsulta)
-                                    && r.horaFin().isAfter(horaSlot)      // la reserva no termina antes
-                                    && r.horaInicio().isBefore(siguienteSlot)
-                    );
-
-            String textoHora = hora.toString();
-
-            // solo añadimos "ocupada" si lo está
-            if (ocupada) {
-                textoHora += " ocupada";
-            }
-
-            disponibilidad.add(textoHora);
-            hora = siguiente;
-
-        }
-
-        Map<String, Object> pistaInfo = new HashMap<>();
-        pistaInfo.put("nombre", pista.nombre());
-        pistaInfo.put("disponibilidad", disponibilidad);
-
-        return pistaInfo;
+        return reservasPista;
     }
 
     /// Métodos Reservations
@@ -600,11 +578,11 @@ public class PadelControlador {
     public void recordatorioReserva(){
         LocalDate hoy = LocalDate.now();
 
-        for (Reserva r : almacen.reservas().values()){
+        for (Reserva r : reservas.values()){
 
             if (r.fechaReserva().equals(hoy)) {
 
-                Usuario u = almacen.usuarios().get(r.idUsuario());
+                Usuario u = usuarios.get(r.idUsuario());
                 System.out.println("=================================");
                 System.out.println("EMAIL SIMULADO");
                 System.out.println("Para: " + u.email());
