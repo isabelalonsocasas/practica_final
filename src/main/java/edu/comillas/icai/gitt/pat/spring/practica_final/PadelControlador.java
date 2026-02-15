@@ -33,12 +33,6 @@ public class PadelControlador {
     public PadelControlador(AlmacenDatos almacen) {
         this.almacen = almacen;
     }
-
-
-    private final Map<Integer, Usuario> usuarios = new HashMap<>();
-    private final Map<Integer, Pista> pistas = new HashMap<>();
-    private final Map<Integer, Reserva> reservas = new HashMap<>();
-
     ///  Métodos auth usuario
 
     //Registrarse (completado)
@@ -362,7 +356,7 @@ public class PadelControlador {
         }
 
         // Para lanzar el 404, comprobamos que existe la pista
-        Pista pista = pistas.get(courtId);
+        Pista pista = almacen.pistas().get(courtId);
         if (pista == null) {
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND,
@@ -370,7 +364,7 @@ public class PadelControlador {
             );
         }
 
-        List<Map<String, String>> reservasPista = reservas.values()
+        List<Map<String, String>> reservasPista = almacen.reservas().values()
                 .stream()
                 .filter(r -> r.idPista() == courtId
                         && r.fechaReserva().equals(fechaConsulta))
@@ -578,11 +572,11 @@ public class PadelControlador {
     public void recordatorioReserva(){
         LocalDate hoy = LocalDate.now();
 
-        for (Reserva r : reservas.values()){
+        for (Reserva r : almacen.reservas().values()){
 
             if (r.fechaReserva().equals(hoy)) {
 
-                Usuario u = usuarios.get(r.idUsuario());
+                Usuario u = almacen.usuarios().get(r.idUsuario());
                 System.out.println("=================================");
                 System.out.println("EMAIL SIMULADO");
                 System.out.println("Para: " + u.email());
