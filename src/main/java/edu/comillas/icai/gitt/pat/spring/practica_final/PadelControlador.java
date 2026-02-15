@@ -525,6 +525,9 @@ public class PadelControlador {
         }
     }
 
+    @Scheduled(cron = "@monthly")
+    public void correoMensual(){
 
+    }
 }
 
