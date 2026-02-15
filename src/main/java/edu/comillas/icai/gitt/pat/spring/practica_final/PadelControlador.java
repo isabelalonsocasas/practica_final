@@ -296,8 +296,6 @@ public class PadelControlador {
             );
         }
 
-        System.out.println("Numero de pistas: " + almacen.pistas().size());
-
         List<Map<String, Object>> resultado = new ArrayList<>();
 
         // Filtramos las pistas por si se hubiese filtrado con courtId
@@ -313,11 +311,17 @@ public class PadelControlador {
 
                     while (!hora.isAfter(cierre)) {
 
+                        LocalTime siguiente = hora.plusMinutes(30);
+
+                        final LocalTime horaSlot = hora;
+                        final LocalTime siguienteSlot = siguiente;
 
                         boolean ocupada = almacen.reservas().values().stream()
                                 .anyMatch(r ->
                                         r.idPista() == p.idPista()
                                                 && r.fechaReserva().equals(fechaConsulta)
+                                                && r.horaFin().isAfter(horaSlot)      // la reserva no termina antes
+                                                && r.horaInicio().isBefore(siguienteSlot)
                                 );
 
                         String textoHora = hora.toString();
@@ -327,8 +331,9 @@ public class PadelControlador {
                             textoHora += " ocupada";
                         }
 
+
                         disponibilidad.add(textoHora);
-                        hora = hora.plusMinutes(30);
+                        hora = siguiente;
                     }
 
                     Map<String, Object> pistaInfo = new HashMap<>();
