@@ -296,29 +296,44 @@ public class PadelControlador {
             );
         }
 
+        System.out.println("Numero de pistas: " + almacen.pistas().size());
+
         List<Map<String, Object>> resultado = new ArrayList<>();
 
         // Filtramos las pistas por si se hubiese filtrado con courtId
-        pistas.values().stream()
-                .filter(p -> courtId == null || p.getIdPista().equals(courtId))
+        almacen.pistas().values().stream()
+                .filter(p -> courtId == null || p.idPista() == courtId)
                 .forEach(p -> {
 
-                    // Hacemos una lista con la pista y sus reservas con sus respectivas horas
-                    List<Map<String, String>> reservasPista = reservas.values()
-                            .stream()
-                            .filter(r -> r.idPista() == p.idPista() // Por cada reserva, mira si la pista coincide
-                                    && r.fechaReserva().equals(fechaConsulta))
-                            .map(r -> Map.of(
-                                    "horaInicio", r.horaInicio().toString(), // Pasamos a String porque es LocalDate y queremos un mapa de String,String
-                                    "horaFin", r.horaFin().toString() // Así se presentan visualmente mejor las horas de las reservas
-                            ))
-                            .toList();
+                    List<String> disponibilidad = new ArrayList<>();
 
-                    // Construir objeto de respuesta
+                    // Fijamos la hora de apertura y de cierre
+                    LocalTime hora = LocalTime.of(9, 0);
+                    LocalTime cierre = LocalTime.of(22, 0);
+
+                    while (!hora.isAfter(cierre)) {
+
+
+                        boolean ocupada = reservas.values().stream()
+                                .anyMatch(r ->
+                                        r.idPista() == p.idPista()
+                                                && r.fechaReserva().equals(fechaConsulta)
+                                );
+
+                        String textoHora = hora.toString();
+
+                        // solo añadimos "ocupada" si lo está
+                        if (ocupada) {
+                            textoHora += " ocupada";
+                        }
+
+                        disponibilidad.add(textoHora);
+                        hora = hora.plusMinutes(30);
+                    }
+
                     Map<String, Object> pistaInfo = new HashMap<>();
-                    pistaInfo.put("idPista", p.getIdPista());
-                    pistaInfo.put("nombre", p.getNombre());
-                    pistaInfo.put("reservas", reservasPista);
+                    pistaInfo.put("nombre", p.nombre());
+                    pistaInfo.put("disponibilidad", disponibilidad);
 
                     resultado.add(pistaInfo);
                 });
