@@ -11,7 +11,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.SecurityFilterChain;
 
-
+// Las clases @Configuration y sus métodos @Bean crean objetos que deben ejecutarse automáticamente
 @Configuration @EnableMethodSecurity
 public class ConfiguracionSeguridad {
 

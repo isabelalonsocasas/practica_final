@@ -9,6 +9,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +24,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @RestController
+@EnableScheduling
 public class PadelControlador {
 
     //IMPORTAMOS NUESTRO ALMACEN DE DATOS
@@ -30,13 +33,6 @@ public class PadelControlador {
     public PadelControlador(AlmacenDatos almacen) {
         this.almacen = almacen;
     }
-
-
-    private final Map<Integer, Usuario> usuarios = new HashMap<>();
-    private final Map<Integer, Pista> pistas = new HashMap<>();
-    private final Map<Integer, Reserva> reservas = new HashMap<>();
-    private final Map<String, Usuario> sesiones = new HashMap<>();
-
     ///  Métodos auth usuario
 
     //Registrarse (completado)
@@ -200,27 +196,83 @@ public class PadelControlador {
         return ResponseEntity.status(HttpStatus.CREATED).body(pista);
     }
 
-
+    //Listar las pistas, según parámetro de pista activa o inactiva (completo)
     @GetMapping("/pistaPadel/courts")
-    public List<Pista> listarPistas(){
-        return pistas.values()
+    public List<Pista> listarPistas(@RequestParam(required = false) Boolean active){
+        return almacen.pistas().values()
                 .stream() // Permite el procesamiento de datos
-                .filter(p -> p.isActive()) // Filtro para comprobar que está activa
+                .filter(p -> active == null || p.activa() == active) // Filtro para comprobar que está activa o no dependiendo del parametro
                 .toList(); // Para poder devolver el JSON
     }
 
+    //Obtener información de una pista (completo)
     @GetMapping("/pistaPadel/courts/{courtId}")
-    public Pista getInfoPista(@PathVariable Integer courtId){
-        Pista pista = pistas.get(courtId);
+    public ResponseEntity<Pista>  getInfoPista(@PathVariable Integer courtId){
+        Pista pista = almacen.pistas().get(courtId);
 
         if (pista == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "Pista no encontrada"
-            );
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Pista no encontrada");
         }
-        return pista;
+        return ResponseEntity.ok(pista);
 
+    }
+
+    //Editar una pista (completo)
+    @PreAuthorize("hasRole('ADMIN')")
+    @PatchMapping("/pistaPadel/courts/{courtId}")
+    public ResponseEntity<Pista> actualizarPista( @PathVariable int courtId, @Valid @RequestBody Pista datosActualizados) {
+
+        Pista pista = almacen.pistas().get(courtId);
+        if (pista == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Pista no encontrada");
+        }
+
+        // Actualizar la nueva pista
+        Pista actualizada = new Pista(
+                courtId,
+                datosActualizados.nombre(),
+                datosActualizados.ubicacion(),
+                datosActualizados.precioHora(),
+                datosActualizados.activa(),
+                pista.fechaAlta() //No tiene sentido cambiar la fecha de alta
+        );
+
+        almacen.pistas().put(courtId, actualizada);
+
+        return ResponseEntity.ok(actualizada);
+    }
+
+    //Desactivar una pista (completo)
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/pistaPadel/courts/{courtId}")
+    public ResponseEntity<Void> desactivarPista(@PathVariable int courtId) {
+
+        Pista pista = almacen.pistas().get(courtId);
+        if (pista == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Pista no encontrada");
+        }
+
+        // Por si hay reservar futuras comprobamos
+        boolean hayReservasFuturas = almacen.reservas().values().stream()
+                .anyMatch(r -> r.idPista() == courtId && r.fechaReserva().isAfter(LocalDate.now()));
+
+        if (hayReservasFuturas) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede desactivar: hay reservas futuras");
+        }
+
+        //Actualizamos la pista como desactivada con el false
+        Pista desactivada = new Pista(
+                pista.idPista(),
+                pista.nombre(),
+                pista.ubicacion(),
+                pista.precioHora(),
+                false,
+                pista.fechaAlta()
+        );
+
+        almacen.pistas().put(courtId, desactivada);
+
+        return ResponseEntity.noContent().build();
     }
 
 
@@ -240,27 +292,47 @@ public class PadelControlador {
 
         List<Map<String, Object>> resultado = new ArrayList<>();
 
-        // Filtramos las pistas con el id requerido,
-        pistas.values().stream()
-                .filter(p -> courtId == null || p.getIdPista().equals(courtId))
+        // Filtramos las pistas por si se hubiese filtrado con courtId
+        almacen.pistas().values().stream()
+                .filter(p -> courtId == null || p.idPista() == courtId)
                 .forEach(p -> {
 
-                    // Hacemos una lista con la pista y sus reservas con sus respectivas horas
-                    List<Map<String, String>> reservasPista = reservas.values()
-                            .stream()
-                            .filter(r -> r.idPista() == p.idPista() // Por cada reserva, mira si la pista coincide
-                                    && r.fechaReserva().equals(fechaConsulta))
-                            .map(r -> Map.of(
-                                    "horaInicio", r.horaInicio().toString(), // Pasamos a String porque es LocalDate y queremos un mapa de String,String
-                                    "horaFin", r.horaFin().toString() // Así se presentan visualmente mejor las horas de las reservas
-                            ))
-                            .toList();
+                    List<String> disponibilidad = new ArrayList<>();
 
-                    // Construir objeto de respuesta
+                    // Fijamos la hora de apertura y de cierre
+                    LocalTime hora = LocalTime.of(9, 0);
+                    LocalTime cierre = LocalTime.of(22, 0);
+
+                    while (!hora.isAfter(cierre)) {
+
+                        LocalTime siguiente = hora.plusMinutes(30);
+
+                        final LocalTime horaSlot = hora;
+                        final LocalTime siguienteSlot = siguiente;
+
+                        boolean ocupada = almacen.reservas().values().stream()
+                                .anyMatch(r ->
+                                        r.idPista() == p.idPista()
+                                                && r.fechaReserva().equals(fechaConsulta)
+                                                && r.horaFin().isAfter(horaSlot)      // la reserva no termina antes
+                                                && r.horaInicio().isBefore(siguienteSlot)
+                                );
+
+                        String textoHora = hora.toString();
+
+                        // solo añadimos "ocupada" si lo está
+                        if (ocupada) {
+                            textoHora += " ocupada";
+                        }
+
+
+                        disponibilidad.add(textoHora);
+                        hora = siguiente;
+                    }
+
                     Map<String, Object> pistaInfo = new HashMap<>();
-                    pistaInfo.put("idPista", p.getIdPista());
-                    pistaInfo.put("nombre", p.getNombre());
-                    pistaInfo.put("reservas", reservasPista);
+                    pistaInfo.put("nombre", p.nombre());
+                    pistaInfo.put("disponibilidad", disponibilidad);
 
                     resultado.add(pistaInfo);
                 });
@@ -271,7 +343,7 @@ public class PadelControlador {
     }
 
     @GetMapping("/pistaPadel/courts/{courtId}/availability")
-    public List<Map<String, String>> consultarDisponibilidadPista(@RequestParam String date,@PathVariable Integer courtId){
+    public Map<String, Object> consultarDisponibilidadPista(@RequestParam String date,@PathVariable Integer courtId){
         // Comprobamos fecha igual que en el método anterior
         LocalDate fechaConsulta;
         try {
@@ -284,7 +356,7 @@ public class PadelControlador {
         }
 
         // Para lanzar el 404, comprobamos que existe la pista
-        Pista pista = pistas.get(courtId);
+        Pista pista = almacen.pistas().get(courtId);
         if (pista == null) {
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND,
@@ -292,20 +364,44 @@ public class PadelControlador {
             );
         }
 
-        List<Map<String, String>> reservasPista = reservas.values()
-                .stream()
-                .filter(r -> r.idPista() == courtId
-                        && r.fechaReserva().equals(fechaConsulta))
-                .map(r -> Map.of(
-                        "horaInicio", r.horaInicio().toString(),
-                        "horaFin", r.horaFin().toString()
-                ))
-                .toList();
+        List<String> disponibilidad = new ArrayList<>();
 
-        return reservasPista;
+        LocalTime hora = LocalTime.of(9, 0);
+        LocalTime cierre = LocalTime.of(22, 0);
+
+        while (!hora.isAfter(cierre)) {
+
+            LocalTime siguiente = hora.plusMinutes(30);
+
+            final LocalTime horaSlot = hora;
+            final LocalTime siguienteSlot = siguiente;
+
+            boolean ocupada = almacen.reservas().values().stream()
+                    .anyMatch(r ->
+                            r.idPista() == pista.idPista()
+                                    && r.fechaReserva().equals(fechaConsulta)
+                                    && r.horaFin().isAfter(horaSlot)
+                                    && r.horaInicio().isBefore(siguienteSlot)
+                    );
+
+            String textoHora = hora.toString();
+
+            if (ocupada) {
+                textoHora += " ocupada";
+            }
+
+            disponibilidad.add(textoHora);
+            hora = siguiente;
+        }
+
+        Map<String, Object> infoPista = new HashMap<>();
+        infoPista.put("nombre", pista.nombre());
+        infoPista.put("disponibilidad", disponibilidad);
+
+        return infoPista;
     }
 
-    //Reservations
+    /// Métodos Reservations
       private final AtomicInteger nextReservaId = new AtomicInteger(1);
     private boolean haySolape(int idPista, LocalDate fechaReserva, LocalTime horaInicioNueva, int duracionMinutosNueva) {
 
@@ -338,13 +434,14 @@ public class PadelControlador {
 
     @PostMapping("/pistaPadel/reservations")
     @ResponseStatus(HttpStatus.CREATED)
-    public Reserva crearReserva(@Valid @RequestBody ReservaBody reserva){
+    public Reserva crearReserva(@Valid @RequestBody ReservaBody reserva, Authentication authentication) {
+
         // 404: la pista no existe
         if (!almacen.pistas().containsKey(reserva.idPista())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Pista no existe");
         }
 
-        // EL CHIVATO: Esto te dirá por consola si hay datos ocultos
+        // Esto muestra por consola si hay datos ocultos
         System.out.println("Reservas ocultas en el almacén: " + almacen.reservas().size());
         System.out.println("Hora recibida en el JSON: " + reserva.horaInicio());
 
@@ -356,9 +453,13 @@ public class PadelControlador {
         int idReserva = nextReservaId.getAndIncrement();
 
         // Usuario (si no hay auth todavía)
-        int idUsuario = 0;
+        String email = authentication.getName();
+        Usuario u = almacen.buscarPorEmail(email);
+        if (u == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No autenticado");
+        }
+        int idUsuario = u.idUsuario();
 
-        // Usa tu constructor corto de Reserva (6 params)
         Reserva nueva = new Reserva(
                 idReserva,
                 idUsuario,
@@ -371,6 +472,7 @@ public class PadelControlador {
         almacen.reservas().put(nueva.idReserva(), nueva);
         return nueva;
     }
+
 
     @GetMapping("/pistaPadel/admin/reservations")
     @PreAuthorize("hasRole('ADMIN')")
@@ -393,7 +495,7 @@ public class PadelControlador {
     @DeleteMapping("/pistaPadel/reservations/{reservationId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void cancelarReserva(@PathVariable int reservationId, Authentication authentication) {
-
+        
         // 404: no existe
         Reserva actual = almacen.reservas().get(reservationId);
         if (actual == null) {
@@ -448,6 +550,70 @@ public class PadelControlador {
     }
 
 
+    @GetMapping("/pistaPadel/reservations")
+    public List<Reserva> misReservas(
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to,
+            Authentication authentication
+    ) {
+        // 401 si no hay login (en tu config ya lo exige, pero por seguridad)
+        if (authentication == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No autenticado");
+        }
 
+        // usuario autenticado
+        String emailAutenticado = authentication.getName();
+        Usuario usuarioAutenticado = almacen.buscarPorEmail(emailAutenticado);
+
+        if (usuarioAutenticado == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no encontrado");
+        }
+
+        // Parseo de fechas opcionales (from/to)
+        LocalDate desde = null;
+        LocalDate hasta = null;
+
+        try {
+            if (from != null) desde = LocalDate.parse(from);
+            if (to != null)   hasta = LocalDate.parse(to);
+        } catch (DateTimeParseException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Formato de fecha inválido (YYYY-MM-DD)");
+        }
+        final LocalDate desdeFinal = desde;
+        final LocalDate hastaFinal = hasta;
+        // Filtrar reservas del usuario + rango fechas si aplica
+        return almacen.reservas().values().stream()
+                .filter(r -> r.idUsuario() == usuarioAutenticado.idUsuario())
+                .filter(r -> desdeFinal == null || !r.fechaReserva().isBefore(desdeFinal)) // fecha >= desde
+                .filter(r -> hastaFinal == null || !r.fechaReserva().isAfter(hastaFinal))  // fecha <= hasta
+                .sorted(Comparator.comparing(Reserva::fechaReserva).thenComparing(Reserva::horaInicio))
+                .toList();
+    }
+
+
+    ///  Tareas programadas
+    @Scheduled(cron = "0 0 2 * * *")
+    public void recordatorioReserva(){
+        LocalDate hoy = LocalDate.now();
+
+        for (Reserva r : almacen.reservas().values()){
+
+            if (r.fechaReserva().equals(hoy)) {
+
+                Usuario u = almacen.usuarios().get(r.idUsuario());
+                System.out.println("=================================");
+                System.out.println("EMAIL SIMULADO");
+                System.out.println("Para: " + u.email());
+                System.out.println("Asunto: Recordatorio Reserva");
+                System.out.println("Mensaje: Le recordamos su reserva de hoy día " + hoy + " a las " + r.horaInicio() +"h. Dispondrá de " + r.duracionMinutos() + " minutos de uso.");
+                System.out.println("=================================");
+            }
+        }
+    }
+
+    @Scheduled(cron = "@monthly")
+    public void correoMensual(){
+
+    }
 }
 
