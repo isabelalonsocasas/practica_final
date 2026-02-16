@@ -252,7 +252,7 @@ public class PadelControlador {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Pista no encontrada");
         }
 
-        // Por si hay reservar futuras comprobamos
+        // Por si hay reservas futuras comprobamos
         boolean hayReservasFuturas = almacen.reservas().values().stream()
                 .anyMatch(r -> r.idPista() == courtId && r.fechaReserva().isAfter(LocalDate.now()));
 
