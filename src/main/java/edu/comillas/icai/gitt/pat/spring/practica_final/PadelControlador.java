@@ -402,7 +402,7 @@ public class PadelControlador {
     }
 
     /// Métodos Reservations
-      private final AtomicInteger nextReservaId = new AtomicInteger(1);
+    private final AtomicInteger nextReservaId = new AtomicInteger(1);
     private boolean haySolape(int idPista, LocalDate fechaReserva, LocalTime horaInicioNueva, int duracionMinutosNueva) {
 
         LocalTime horaFinNueva = horaInicioNueva.plusMinutes(duracionMinutosNueva);
@@ -440,10 +440,6 @@ public class PadelControlador {
         if (!almacen.pistas().containsKey(reserva.idPista())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Pista no existe");
         }
-
-        // Esto muestra por consola si hay datos ocultos
-        System.out.println("Reservas ocultas en el almacén: " + almacen.reservas().size());
-        System.out.println("Hora recibida en el JSON: " + reserva.horaInicio());
 
         // 409: slot ocupado (mismo courtId + misma fecha + solape horario)
         if (haySolape(reserva.idPista(), reserva.fechaReserva(), reserva.horaInicio(), reserva.duracionMinutos())) {
@@ -588,6 +584,57 @@ public class PadelControlador {
                 .filter(r -> hastaFinal == null || !r.fechaReserva().isAfter(hastaFinal))  // fecha <= hasta
                 .sorted(Comparator.comparing(Reserva::fechaReserva).thenComparing(Reserva::horaInicio))
                 .toList();
+    }
+
+    @PatchMapping("/pistaPadel/reservations/{idReserva}")
+    public ResponseEntity<Reserva> modificarReserva(
+            @PathVariable int idReserva,
+            @RequestBody @Valid ReservaBody reservaCambio,
+            Authentication authentication
+    ) {
+        Reserva reserva = almacen.reservas().get(idReserva);
+        if (reserva == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Reserva no existe");
+        }
+
+        // usuario autenticado (por email)
+        String emailAutenticado = authentication.getName();
+        Usuario usuarioAutenticado = almacen.buscarPorEmail(emailAutenticado);
+
+        // Comprobar si admin
+        boolean esAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        // Comprobar si dueño
+        boolean esDueno = (usuarioAutenticado != null) && (reserva.idUsuario() == usuarioAutenticado.idUsuario());
+
+        // 403: si no es admin ni dueño
+        if (!esAdmin && !esDueno) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No autorizado");
+        }
+
+        // 404: la nueva pista no existe
+        if (!almacen.pistas().containsKey(reservaCambio.idPista())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Pista no existe");
+        }
+
+        // 409: slot ocupado (mismo courtId + misma fecha + solape horario)
+        if (haySolape(reservaCambio.idPista(), reservaCambio.fechaReserva(), reservaCambio.horaInicio(), reservaCambio.duracionMinutos())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Slot ocupado");
+        }
+
+        Reserva reservaCambiada = new Reserva(
+                idReserva,
+                usuarioAutenticado.idUsuario(),
+                reservaCambio.idPista(),
+                reservaCambio.fechaReserva(),
+                reservaCambio.horaInicio(),
+                reservaCambio.duracionMinutos()
+        );
+
+        almacen.reservas().put(idReserva, reservaCambiada);
+
+        return ResponseEntity.ok(reservaCambiada);
     }
 
 
