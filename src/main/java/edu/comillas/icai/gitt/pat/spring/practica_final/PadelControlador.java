@@ -636,31 +636,5 @@ public class PadelControlador {
 
         return ResponseEntity.ok(reservaCambiada);
     }
-
-
-    ///  Tareas programadas
-    @Scheduled(cron = "0 0 2 * * *")
-    public void recordatorioReserva(){
-        LocalDate hoy = LocalDate.now();
-
-        for (Reserva r : almacen.reservas().values()){
-
-            if (r.fechaReserva().equals(hoy)) {
-
-                Usuario u = almacen.usuarios().get(r.idUsuario());
-                System.out.println("=================================");
-                System.out.println("EMAIL SIMULADO");
-                System.out.println("Para: " + u.email());
-                System.out.println("Asunto: Recordatorio Reserva");
-                System.out.println("Mensaje: Le recordamos su reserva de hoy día " + hoy + " a las " + r.horaInicio() +"h. Dispondrá de " + r.duracionMinutos() + " minutos de uso.");
-                System.out.println("=================================");
-            }
-        }
-    }
-
-    @Scheduled(cron = "@monthly")
-    public void correoMensual(){
-
-    }
 }
 
