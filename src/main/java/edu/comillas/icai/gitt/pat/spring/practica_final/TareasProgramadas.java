@@ -74,7 +74,10 @@ public class TareasProgramadas {
             almacen.pistas().values().stream()
                     .filter(Pista::activa)
                     .forEach(pista -> {
-                        List<String> libres = obtenerSlotsLibres(pista.idPista(), dia);
+                        List<String> libres = almacen.obtenerDisponibilidadPista(pista.idPista(), dia)
+                                .stream()
+                                .filter(s -> !s.contains("ocupada"))
+                                .toList();
                         sb.append("- ").append(pista.nombre()).append(": ");
                         if (libres.isEmpty()) {
                             sb.append("Sin disponibilidad.");
@@ -87,29 +90,29 @@ public class TareasProgramadas {
         return sb.toString();
     }
 
-    private List<String> obtenerSlotsLibres(int idPista, LocalDate fecha) {
-        List<String> libres = new ArrayList<>();
-        LocalTime hora = LocalTime.of(9, 0);
-        LocalTime cierre = LocalTime.of(22, 0);
-
-        while (!hora.isAfter(cierre)) {
-            LocalTime finSlot = hora.plusMinutes(30);
-            final LocalTime h = hora;
-
-            // Optimizamos la comprobación de ocupación
-            boolean ocupada = almacen.reservas().values().stream()
-                    .anyMatch(r -> r.idPista() == idPista
-                            && r.fechaReserva().equals(fecha)
-                            && r.horaFin().isAfter(h)
-                            && r.horaInicio().isBefore(finSlot)
-                            && r.estado() != Reserva.Estado.CANCELADA);
-
-            if (!ocupada) {
-                libres.add(hora.toString());
-            }
-            hora = finSlot;
-        }
-        return libres;
-    }
+//    private List<String> obtenerSlotsLibres(int idPista, LocalDate fecha) {
+//        List<String> libres = new ArrayList<>();
+//        LocalTime hora = LocalTime.of(9, 0);
+//        LocalTime cierre = LocalTime.of(22, 0);
+//
+//        while (!hora.isAfter(cierre)) {
+//            LocalTime finSlot = hora.plusMinutes(30);
+//            final LocalTime h = hora;
+//
+//            // Optimizamos la comprobación de ocupación
+//            boolean ocupada = almacen.reservas().values().stream()
+//                    .anyMatch(r -> r.idPista() == idPista
+//                            && r.fechaReserva().equals(fecha)
+//                            && r.horaFin().isAfter(h)
+//                            && r.horaInicio().isBefore(finSlot)
+//                            && r.estado() != Reserva.Estado.CANCELADA);
+//
+//            if (!ocupada) {
+//                libres.add(hora.toString());
+//            }
+//            hora = finSlot;
+//        }
+//        return libres;
+//    }
 
 }
