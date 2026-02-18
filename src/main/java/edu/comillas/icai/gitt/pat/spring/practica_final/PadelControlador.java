@@ -227,6 +227,18 @@ public class PadelControlador {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Pista no encontrada");
         }
 
+        boolean nombreDuplicado = almacen.pistas().values().stream()
+                .anyMatch(p ->
+                        p.nombre().equalsIgnoreCase(pista.nombre())
+                                && p.idPista() != courtId   // importante para no compararse consigo misma
+                );
+
+        if (nombreDuplicado) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Ya existe una pista con ese nombre");
+        }
+
         // Actualizar la nueva pista
         Pista actualizada = new Pista(
                 courtId,
