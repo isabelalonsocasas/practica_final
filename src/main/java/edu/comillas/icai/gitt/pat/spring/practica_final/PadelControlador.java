@@ -289,9 +289,11 @@ public class PadelControlador {
 
 
     /// Métodos availability
-
     @GetMapping("/pistaPadel/availability")
-    public List<Map<String, Object>> consultarDisponibilidad(@RequestParam String date, @RequestParam(required = false) Integer courtId) {
+    public List<Map<String, Object>> consultarDisponibilidad(
+            @RequestParam String date,
+            @RequestParam(required = false) Integer courtId) {
+
         LocalDate fechaConsulta;
         try {
             fechaConsulta = LocalDate.parse(date);
@@ -302,62 +304,29 @@ public class PadelControlador {
             );
         }
 
-        List<Map<String, Object>> resultado = new ArrayList<>();
+        // Se usa método de disponibilidad del almacén
 
-        // Filtramos las pistas por si se hubiese filtrado con courtId
-        almacen.pistas().values().stream()
+        return almacen.pistas().values().stream()
+                // Filtramos por ID si el parámetro está presente
                 .filter(p -> courtId == null || p.idPista() == courtId)
-                .forEach(p -> {
-
-                    List<String> disponibilidad = new ArrayList<>();
-
-                    // Fijamos la hora de apertura y de cierre
-                    LocalTime hora = LocalTime.of(9, 0);
-                    LocalTime cierre = LocalTime.of(22, 0);
-
-                    while (!hora.isAfter(cierre)) {
-
-                        LocalTime siguiente = hora.plusMinutes(30);
-
-                        final LocalTime horaSlot = hora;
-                        final LocalTime siguienteSlot = siguiente;
-
-                        boolean ocupada = almacen.reservas().values().stream()
-                                .anyMatch(r ->
-                                        r.idPista() == p.idPista()
-                                                && r.fechaReserva().equals(fechaConsulta)
-                                                && r.horaFin().isAfter(horaSlot)      // la reserva no termina antes
-                                                && r.horaInicio().isBefore(siguienteSlot)
-                                );
-
-                        String textoHora = hora.toString();
-
-                        // solo añadimos "ocupada" si lo está
-                        if (ocupada) {
-                            textoHora += " ocupada";
-                        }
-
-
-                        disponibilidad.add(textoHora);
-                        hora = siguiente;
-                    }
-
+                .map(p -> {
                     Map<String, Object> pistaInfo = new HashMap<>();
                     pistaInfo.put("nombre", p.nombre());
-                    pistaInfo.put("disponibilidad", disponibilidad);
 
-                    resultado.add(pistaInfo);
-                });
+                    // REUTILIZACIÓN DRY: Llamamos al método centralizado en el almacén
+                    pistaInfo.put("disponibilidad", almacen.obtenerDisponibilidadPista(p.idPista(), fechaConsulta));
 
-        return resultado;
-
-
+                    return pistaInfo;
+                })
+                .toList();
     }
 
     @GetMapping("/pistaPadel/courts/{courtId}/availability")
     public Map<String, Object> consultarDisponibilidadPista(@RequestParam String date,@PathVariable Integer courtId){
         // Comprobamos fecha igual que en el método anterior
         LocalDate fechaConsulta;
+        Pista pista = almacen.pistas().get(courtId);
+
         try {
             fechaConsulta = LocalDate.parse(date.trim()); // Solo fecha
         } catch (DateTimeParseException e) {
@@ -368,7 +337,6 @@ public class PadelControlador {
         }
 
         // Para lanzar el 404, comprobamos que existe la pista
-        Pista pista = almacen.pistas().get(courtId);
         if (pista == null) {
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND,
@@ -376,40 +344,11 @@ public class PadelControlador {
             );
         }
 
-        List<String> disponibilidad = new ArrayList<>();
-
-        LocalTime hora = LocalTime.of(9, 0);
-        LocalTime cierre = LocalTime.of(22, 0);
-
-        while (!hora.isAfter(cierre)) {
-
-            LocalTime siguiente = hora.plusMinutes(30);
-
-            final LocalTime horaSlot = hora;
-            final LocalTime siguienteSlot = siguiente;
-
-            boolean ocupada = almacen.reservas().values().stream()
-                    .anyMatch(r ->
-                            r.idPista() == pista.idPista()
-                                    && r.fechaReserva().equals(fechaConsulta)
-                                    && r.horaFin().isAfter(horaSlot)
-                                    && r.horaInicio().isBefore(siguienteSlot)
-                    );
-
-            String textoHora = hora.toString();
-
-            if (ocupada) {
-                textoHora += " ocupada";
-            }
-
-            disponibilidad.add(textoHora);
-            hora = siguiente;
-        }
+        List<String> disponibilidad = almacen.obtenerDisponibilidadPista(courtId, fechaConsulta);
 
         Map<String, Object> infoPista = new HashMap<>();
         infoPista.put("nombre", pista.nombre());
         infoPista.put("disponibilidad", disponibilidad);
-
         return infoPista;
     }
 
