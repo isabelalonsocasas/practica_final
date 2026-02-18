@@ -481,29 +481,56 @@ public class PadelControlador {
         return nueva;
     }
 
+    private boolean yaHaEmpezado(Reserva r) {
+        LocalDateTime inicio = LocalDateTime.of(r.fechaReserva(), r.horaInicio());
+        return inicio.isBefore(LocalDateTime.now());
+    }
 
-    @GetMapping("/pistaPadel/admin/reservations")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<Reserva>> getReservas(
-            @RequestParam(required = false) LocalDate fecha,
-            @RequestParam(required = false) Integer pista,
-            @RequestParam(required = false) Integer user) {
 
-        List<Reserva> reservas = new ArrayList<>(almacen.reservas().values());
+    @GetMapping("/pistaPadel/reservations")
+    public List<Reserva> misReservas(
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to,
+            Authentication authentication
+    ) {
+        // 401 si no hay login (en tu config ya lo exige, pero por seguridad)
+        if (authentication == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No autenticado");
+        }
 
-        List<Reserva> reservasFiltro = reservas.stream()
-                .filter(r -> fecha == null || r.fechaReserva().toString().equals(fecha))
-                .filter(r -> pista == null || r.idPista() == pista)
-                .filter(r -> user == null || r.idUsuario() == user)
+        // usuario autenticado
+        String emailAutenticado = authentication.getName();
+        Usuario usuarioAutenticado = almacen.buscarPorEmail(emailAutenticado);
+
+        if (usuarioAutenticado == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no encontrado");
+        }
+
+        // Parseo de fechas opcionales (from/to)
+        LocalDate desde = null;
+        LocalDate hasta = null;
+
+        try {
+            if (from != null) desde = LocalDate.parse(from);
+            if (to != null)   hasta = LocalDate.parse(to);
+        } catch (DateTimeParseException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Formato de fecha inválido (YYYY-MM-DD)");
+        }
+        final LocalDate desdeFinal = desde;
+        final LocalDate hastaFinal = hasta;
+        // Filtrar reservas del usuario + rango fechas si aplica
+        return almacen.reservas().values().stream()
+                .filter(r -> r.idUsuario() == usuarioAutenticado.idUsuario())
+                .filter(r -> desdeFinal == null || !r.fechaReserva().isBefore(desdeFinal)) // fecha >= desde
+                .filter(r -> hastaFinal == null || !r.fechaReserva().isAfter(hastaFinal))  // fecha <= hasta
+                .sorted(Comparator.comparing(Reserva::fechaReserva).thenComparing(Reserva::horaInicio))
                 .toList();
-
-        return ResponseEntity.ok(reservasFiltro);
     }
 
     @DeleteMapping("/pistaPadel/reservations/{reservationId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void cancelarReserva(@PathVariable int reservationId, Authentication authentication) {
-        
+
         // 404: no existe
         Reserva actual = almacen.reservas().get(reservationId);
         if (actual == null) {
@@ -550,52 +577,6 @@ public class PadelControlador {
         );
 
         almacen.reservas().put(reservationId, cancelada);
-    }
-
-    private boolean yaHaEmpezado(Reserva r) {
-        LocalDateTime inicio = LocalDateTime.of(r.fechaReserva(), r.horaInicio());
-        return inicio.isBefore(LocalDateTime.now());
-    }
-
-
-    @GetMapping("/pistaPadel/reservations")
-    public List<Reserva> misReservas(
-            @RequestParam(required = false) String from,
-            @RequestParam(required = false) String to,
-            Authentication authentication
-    ) {
-        // 401 si no hay login (en tu config ya lo exige, pero por seguridad)
-        if (authentication == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No autenticado");
-        }
-
-        // usuario autenticado
-        String emailAutenticado = authentication.getName();
-        Usuario usuarioAutenticado = almacen.buscarPorEmail(emailAutenticado);
-
-        if (usuarioAutenticado == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no encontrado");
-        }
-
-        // Parseo de fechas opcionales (from/to)
-        LocalDate desde = null;
-        LocalDate hasta = null;
-
-        try {
-            if (from != null) desde = LocalDate.parse(from);
-            if (to != null)   hasta = LocalDate.parse(to);
-        } catch (DateTimeParseException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Formato de fecha inválido (YYYY-MM-DD)");
-        }
-        final LocalDate desdeFinal = desde;
-        final LocalDate hastaFinal = hasta;
-        // Filtrar reservas del usuario + rango fechas si aplica
-        return almacen.reservas().values().stream()
-                .filter(r -> r.idUsuario() == usuarioAutenticado.idUsuario())
-                .filter(r -> desdeFinal == null || !r.fechaReserva().isBefore(desdeFinal)) // fecha >= desde
-                .filter(r -> hastaFinal == null || !r.fechaReserva().isAfter(hastaFinal))  // fecha <= hasta
-                .sorted(Comparator.comparing(Reserva::fechaReserva).thenComparing(Reserva::horaInicio))
-                .toList();
     }
 
     @PatchMapping("/pistaPadel/reservations/{idReserva}")
@@ -647,6 +628,26 @@ public class PadelControlador {
         almacen.reservas().put(idReserva, reservaCambiada);
 
         return ResponseEntity.ok(reservaCambiada);
+    }
+
+    ///  Método admin
+
+    @GetMapping("/pistaPadel/admin/reservations")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Reserva>> getReservas(
+            @RequestParam(required = false) LocalDate fecha,
+            @RequestParam(required = false) Integer pista,
+            @RequestParam(required = false) Integer user) {
+
+        List<Reserva> reservas = new ArrayList<>(almacen.reservas().values());
+
+        List<Reserva> reservasFiltro = reservas.stream()
+                .filter(r -> fecha == null || r.fechaReserva().toString().equals(fecha))
+                .filter(r -> pista == null || r.idPista() == pista)
+                .filter(r -> user == null || r.idUsuario() == user)
+                .toList();
+
+        return ResponseEntity.ok(reservasFiltro);
     }
 }
 
