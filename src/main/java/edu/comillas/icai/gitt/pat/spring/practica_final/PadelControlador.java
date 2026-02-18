@@ -229,14 +229,14 @@ public class PadelControlador {
 
         boolean nombreDuplicado = almacen.pistas().values().stream()
                 .anyMatch(p ->
-                        p.nombre().equalsIgnoreCase(pista.nombre())
+                        p.nombre().equalsIgnoreCase(datosActualizados.nombre())
                                 && p.idPista() != courtId   // importante para no compararse consigo misma
                 );
 
         if (nombreDuplicado) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "Ya existe una pista con ese nombre");
+                    "El nombre nuevo de la pista ya está siendo utilizado");
         }
 
         // Actualizar la nueva pista
