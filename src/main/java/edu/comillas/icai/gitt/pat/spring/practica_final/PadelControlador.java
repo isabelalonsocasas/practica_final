@@ -466,6 +466,35 @@ public class PadelControlador {
                 .toList();
     }
 
+    @GetMapping("/pistaPadel/reservations/{reservationId}")
+    public Reserva obtenerReserva(@PathVariable int reservationId,  Authentication authentication){
+
+        // 404: no existe
+        Reserva actual = almacen.reservas().get(reservationId);
+        if (actual == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Reserva no existe");
+        }
+
+        // usuario autenticado (por email)
+        String emailAutenticado = authentication.getName();
+        Usuario usuarioAutenticado = almacen.buscarPorEmail(emailAutenticado);
+
+        // Comprobante ADMIN
+        boolean esAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        // Comprobante dueño
+        boolean esDueno = (usuarioAutenticado != null) && (actual.idUsuario() == usuarioAutenticado.idUsuario());
+
+        // 403: si no es admin ni dueño
+        if (!esAdmin && !esDueno) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No autorizado");
+        }
+
+        return actual;
+    }
+
+
     @DeleteMapping("/pistaPadel/reservations/{reservationId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void cancelarReserva(@PathVariable int reservationId, Authentication authentication) {
@@ -480,11 +509,11 @@ public class PadelControlador {
         String emailAutenticado = authentication.getName();
         Usuario usuarioAutenticado = almacen.buscarPorEmail(emailAutenticado);
 
-        // ¿admin?
+        // Comprobante ADMIN
         boolean esAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
-        // ¿dueño?
+        // Comprobante dueño
         boolean esDueno = (usuarioAutenticado != null) && (actual.idUsuario() == usuarioAutenticado.idUsuario());
 
         // 403: si no es admin ni dueño
