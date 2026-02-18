@@ -304,7 +304,7 @@ public class PadelControlador {
             );
         }
 
-        // Se usa método de disponibilidad del almacén
+        // Se usa obtener disponibilidad del almacén
 
         return almacen.pistas().values().stream()
                 // Filtramos por ID si el parámetro está presente
@@ -313,7 +313,7 @@ public class PadelControlador {
                     Map<String, Object> pistaInfo = new HashMap<>();
                     pistaInfo.put("nombre", p.nombre());
 
-                    // REUTILIZACIÓN DRY: Llamamos al método centralizado en el almacén
+                    //Se llama a la disponibilidad del almacén
                     pistaInfo.put("disponibilidad", almacen.obtenerDisponibilidadPista(p.idPista(), fechaConsulta));
 
                     return pistaInfo;
@@ -323,7 +323,7 @@ public class PadelControlador {
 
     @GetMapping("/pistaPadel/courts/{courtId}/availability")
     public Map<String, Object> consultarDisponibilidadPista(@RequestParam String date,@PathVariable Integer courtId){
-        // Comprobamos fecha igual que en el método anterior
+        // Comprobamos fecha igual que en el endpoint anterior
         LocalDate fechaConsulta;
         Pista pista = almacen.pistas().get(courtId);
 
