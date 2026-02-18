@@ -481,25 +481,6 @@ public class PadelControlador {
         return nueva;
     }
 
-
-    @GetMapping("/pistaPadel/admin/reservations")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<Reserva>> getReservas(
-            @RequestParam(required = false) LocalDate fecha,
-            @RequestParam(required = false) Integer pista,
-            @RequestParam(required = false) Integer user) {
-
-        List<Reserva> reservas = new ArrayList<>(almacen.reservas().values());
-
-        List<Reserva> reservasFiltro = reservas.stream()
-                .filter(r -> fecha == null || r.fechaReserva().toString().equals(fecha))
-                .filter(r -> pista == null || r.idPista() == pista)
-                .filter(r -> user == null || r.idUsuario() == user)
-                .toList();
-
-        return ResponseEntity.ok(reservasFiltro);
-    }
-
     private boolean yaHaEmpezado(Reserva r) {
         LocalDateTime inicio = LocalDateTime.of(r.fechaReserva(), r.horaInicio());
         return inicio.isBefore(LocalDateTime.now());
@@ -647,6 +628,26 @@ public class PadelControlador {
         almacen.reservas().put(idReserva, reservaCambiada);
 
         return ResponseEntity.ok(reservaCambiada);
+    }
+
+    ///  Método admin
+
+    @GetMapping("/pistaPadel/admin/reservations")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Reserva>> getReservas(
+            @RequestParam(required = false) LocalDate fecha,
+            @RequestParam(required = false) Integer pista,
+            @RequestParam(required = false) Integer user) {
+
+        List<Reserva> reservas = new ArrayList<>(almacen.reservas().values());
+
+        List<Reserva> reservasFiltro = reservas.stream()
+                .filter(r -> fecha == null || r.fechaReserva().toString().equals(fecha))
+                .filter(r -> pista == null || r.idPista() == pista)
+                .filter(r -> user == null || r.idUsuario() == user)
+                .toList();
+
+        return ResponseEntity.ok(reservasFiltro);
     }
 }
 
