@@ -42,7 +42,7 @@ public class TareasProgramadas {
         }
     }
 
-    @Scheduled(cron = "0 0 9 * * 1)
+    @Scheduled(cron = "0 0 9 * * 1")
     public void correoSemanal(){
 
         logger.info("Generando reporte semanal de disponibilidad...");
