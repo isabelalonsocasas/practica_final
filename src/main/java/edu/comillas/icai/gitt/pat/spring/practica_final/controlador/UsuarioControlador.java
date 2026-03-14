@@ -1,6 +1,6 @@
 package edu.comillas.icai.gitt.pat.spring.practica_final.controlador;
 
-import edu.comillas.icai.gitt.pat.spring.practica_final.RECORDS.Usuario;
+import edu.comillas.icai.gitt.pat.spring.practica_final.entidad.Usuario;
 import edu.comillas.icai.gitt.pat.spring.practica_final.servicio.ServicioPistas;
 import edu.comillas.icai.gitt.pat.spring.practica_final.servicio.ServicioReservas;
 import edu.comillas.icai.gitt.pat.spring.practica_final.servicio.ServicioUsuarios;
@@ -27,17 +27,6 @@ public class UsuarioControlador {
     //Registrarse (completado)
     @PostMapping("/pistaPadel/auth/register")
     public ResponseEntity<Usuario> registrarUsuario(@Valid @RequestBody Usuario NuevoUsuario) {
-        boolean emailExiste = almacen.usuarios().values().stream()
-                .anyMatch(u -> u.email().equals(NuevoUsuario.email()));
-
-        if (emailExiste) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "El email ya existe"
-            );
-        }
-        almacen.usuarios().put(NuevoUsuario.idUsuario(), NuevoUsuario);
-        return ResponseEntity.status(HttpStatus.CREATED).body(NuevoUsuario); //Refleja 201 created y el usuario
-
+        return servicioUsuarios.registrarUsuario(NuevoUsuario);
     }
 }
