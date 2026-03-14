@@ -35,7 +35,7 @@ public class PadelControlador {
     }
     ///  Métodos auth usuario
 
-    //Registrarse (completado)
+    //Registrarse (YA ACTUALIZADO)
     @PostMapping("/pistaPadel/auth/register")
     public ResponseEntity<Usuario> registrarUsuario(@Valid @RequestBody Usuario NuevoUsuario) {
         boolean emailExiste = almacen.usuarios().values().stream()
