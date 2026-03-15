@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface RepoPista extends CrudRepository<Pista, Long> {
     List<Pista> findByActiva(boolean activa);
+    Pista findByNombre(String nombre);
 }
