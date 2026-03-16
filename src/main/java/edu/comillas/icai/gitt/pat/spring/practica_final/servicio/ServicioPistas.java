@@ -1,5 +1,7 @@
 package edu.comillas.icai.gitt.pat.spring.practica_final.servicio;
 
+import edu.comillas.icai.gitt.pat.spring.practica_final.entidad.Pista;
+import edu.comillas.icai.gitt.pat.spring.practica_final.entidad.Reserva;
 import edu.comillas.icai.gitt.pat.spring.practica_final.repositorio.RepoPista;
 import edu.comillas.icai.gitt.pat.spring.practica_final.repositorio.RepoReserva;
 import edu.comillas.icai.gitt.pat.spring.practica_final.repositorio.RepoRol;
@@ -13,7 +15,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class ServicioPistas {
@@ -28,7 +33,7 @@ public class ServicioPistas {
     
 
     public ResponseEntity<Pista> crearPista(Pista pista) {
-    Pista pistaExistente = repoPista.findByNombre(pista.nombre());
+    Pista pistaExistente = repoPista.findByNombre(pista.nombre);
 
         if (pistaExistente != null) {
             throw new ResponseStatusException(
@@ -91,11 +96,11 @@ public class ServicioPistas {
 
         Pista actualizada = new Pista(
                 courtId,
-                datosActualizados.nombre(),
-                datosActualizados.ubicacion(),
-                datosActualizados.precioHora(),
-                datosActualizados.activa(),
-                pista.fechaAlta()
+                datosActualizados.nombre,
+                datosActualizados.ubicacion,
+                datosActualizados.precioHora,
+                datosActualizados.activa,
+                pista.fechaAlta
         );
 
         repoPista.save(actualizada);
@@ -115,7 +120,7 @@ public class ServicioPistas {
         }
 
         List<Reserva> reservas = new ArrayList<>();
-        repoReservas.findAll().forEach(reservas::add);
+        repoReserva.findAll().forEach(reservas::add);
 
         boolean hayReservasFuturas = reservas.stream()
                 .anyMatch(r -> r.idPista() == courtId && r.fechaReserva().isAfter(LocalDate.now()));
@@ -202,7 +207,7 @@ public class ServicioPistas {
     private List<String> obtenerDisponibilidadPista(Integer courtId, LocalDate fechaConsulta) {
 
         List<Reserva> reservas = new ArrayList<>();
-        repoReservas.findAll().forEach(reservas::add);
+        repoReserva.findAll().forEach(reservas::add);
 
         List<Reserva> reservasPista = reservas.stream()
                 .filter(r -> r.idPista() == courtId && r.fechaReserva().equals(fechaConsulta))
