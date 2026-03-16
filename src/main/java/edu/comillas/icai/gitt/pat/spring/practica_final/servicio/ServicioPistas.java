@@ -47,14 +47,14 @@ public class ServicioPistas {
     }
 
     public List<Pista> listarPistas(Boolean active) {
-        List<Pista> pistas = new ArrayList<>();
-        repoPista.findAll().forEach(pistas::add);
-
-        return pistas.stream().filter(p -> active == null || p.activa() == active).toList();
+        if (active == null) {
+            return (List<Pista>) repoPista.findAll();
+        }
+        return repoPista.findByActiva(active);
     }
 
-    public ResponseEntity<Pista> getInfoPista(Integer courtId) {
-        Pista pista = repoPista.findById(courtId).orElse(null);
+    public ResponseEntity<Pista> getInfoPista(Integer idPista) {
+        Pista pista = repoPista.findById((long)(idPista)).orElse(null);
 
         if (pista == null) {
             throw new ResponseStatusException(
@@ -66,9 +66,9 @@ public class ServicioPistas {
         return ResponseEntity.ok(pista);
     }
 
-    public ResponseEntity<Pista> actualizarPista(int courtId, Pista datosActualizados) {
+    public ResponseEntity<Pista> actualizarPista(int idPista, Pista pistaActualizada) {
 
-        Pista pista = repoPista.findById(courtId).orElse(null);
+        Pista pista = repoPista.findById((long) idPista).orElse(null);
 
         if (pista == null) {
             throw new ResponseStatusException(
@@ -77,40 +77,26 @@ public class ServicioPistas {
             );
         }
 
-        boolean nombreDuplicado = false;
-        List<Pista> pistas = new ArrayList<>();
-        repoPista.findAll().forEach(pistas::add);
-
-        nombreDuplicado = pistas.stream()
-                .anyMatch(p ->
-                        p.nombre().equalsIgnoreCase(datosActualizados.nombre())
-                                && p.idPista() != courtId
-                );
-
-        if (nombreDuplicado) {
+        if (repoPista.existsByNombreIgnoreCaseAndIdPistaNot(pistaActualizada.nombre, idPista)) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "El nombre nuevo de la pista ya está siendo utilizado"
             );
         }
 
-        Pista actualizada = new Pista(
-                courtId,
-                datosActualizados.nombre,
-                datosActualizados.ubicacion,
-                datosActualizados.precioHora,
-                datosActualizados.activa,
-                pista.fechaAlta
-        );
+        pista.nombre = pistaActualizada.nombre;
+        pista.ubicacion = pistaActualizada.ubicacion;
+        pista.precioHora = pistaActualizada.precioHora;
+        pista.activa = pistaActualizada.activa;
 
-        repoPista.save(actualizada);
+        repoPista.save(pista);
 
-        return ResponseEntity.ok(actualizada);
+        return ResponseEntity.ok(pista);
     }
 
-    public ResponseEntity<Void> desactivarPista(int courtId) {
+    public ResponseEntity<Void> desactivarPista(int idPista) {
 
-        Pista pista = repoPista.findById(courtId).orElse(null);
+        Pista pista = repoPista.findById((long) idPista).orElse(null);
 
         if (pista == null) {
             throw new ResponseStatusException(
@@ -119,29 +105,17 @@ public class ServicioPistas {
             );
         }
 
-        List<Reserva> reservas = new ArrayList<>();
-        repoReserva.findAll().forEach(reservas::add);
-
-        boolean hayReservasFuturas = reservas.stream()
-                .anyMatch(r -> r.idPista() == courtId && r.fechaReserva().isAfter(LocalDate.now()));
-
-        if (hayReservasFuturas) {
+        if (repoReserva.existsByIdPistaAndFechaReservaAfter(idPista, LocalDate.now())) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "No se puede desactivar: hay reservas futuras"
             );
         }
 
-        Pista desactivada = new Pista(
-                pista.idPista(),
-                pista.nombre(),
-                pista.ubicacion(),
-                pista.precioHora(),
-                false,
-                pista.fechaAlta()
-        );
 
-        repoPista.save(desactivada);
+        pista.activa = false;
+
+        repoPista.save(pista);
 
         return ResponseEntity.noContent().build();
     }
