@@ -14,5 +14,9 @@ public interface RepoReserva extends CrudRepository<Reserva, Long> {
     List<Reserva> findByEstado(Reserva.Estado estado);
     List<Reserva> findByPista_IdPistaAndFechaReserva(Long idPista, LocalDate fechaReserva);
     boolean existsByPista_IdPistaAndFechaReservaAfter(long idPista, LocalDate fecha);//Reservas por estado
+    List<Reserva> findByUsuarioIdUsuarioOrderByFechaReservaAscHoraInicioAsc(Long idUsuario);
+    List<Reserva> findByUsuarioIdUsuarioAndFechaReservaGreaterThanEqualOrderByFechaReservaAscHoraInicioAsc(long idUsuario, LocalDate desde);
+    List<Reserva> findByUsuarioIdUsuarioAndFechaReservaLessThanEqualOrderByFechaReservaAscHoraInicioAsc(long idUsuario, LocalDate hasta);
+    List<Reserva> findByUsuarioIdUsuarioAndFechaReservaBetweenOrderByFechaReservaAscHoraInicioAsc(long idUsuario, LocalDate desde, LocalDate hasta);
 
 }

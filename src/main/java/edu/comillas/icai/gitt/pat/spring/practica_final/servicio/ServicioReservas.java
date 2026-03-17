@@ -75,13 +75,7 @@ public class ServicioReservas {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No autenticado");
         }
 
-        Reserva nueva = new Reserva();
-        nueva.usuario=u;
-        nueva.pista=pista;
-        nueva.horaInicio=reserva.horaInicio;
-        nueva.duracionMinutos=reserva.duracionMinutos;
-
-        return repoReserva.save(nueva);
+        return repoReserva.save(reserva);
     }
 
     public List<Reserva> misReservas(String from, String to, Authentication authentication) {
@@ -110,15 +104,15 @@ public class ServicioReservas {
         final LocalDate desdeFinal = desde;
         final LocalDate hastaFinal = hasta;
 
-        List<Reserva> reservas = new ArrayList<>();
-        repoReserva.findAll().forEach(reservas::add);
-
-        return reservas.stream()
-                .filter(r -> r.usuario.idUsuario.equals(usuarioAutenticado.idUsuario))
-                .filter(r -> desdeFinal == null || !r.fechaReserva.isBefore(desdeFinal))
-                .filter(r -> hastaFinal == null || !r.fechaReserva.isAfter(hastaFinal))
-                .sorted(Comparator.comparing((Reserva r) -> r.fechaReserva).thenComparing((Reserva r) -> r.horaInicio))
-                .toList();
+        if (desde != null && hasta != null) {
+            return repoReserva.findByUsuarioIdUsuarioAndFechaReservaBetweenOrderByFechaReservaAscHoraInicioAsc(usuarioAutenticado.idUsuario, desde, hasta);
+        } else if (desde != null) {
+            return repoReserva.findByUsuarioIdUsuarioAndFechaReservaGreaterThanEqualOrderByFechaReservaAscHoraInicioAsc(usuarioAutenticado.idUsuario, desde);
+        } else if (hasta != null) {
+            return repoReserva.findByUsuarioIdUsuarioAndFechaReservaLessThanEqualOrderByFechaReservaAscHoraInicioAsc(usuarioAutenticado.idUsuario, hasta);
+        } else {
+            return repoReserva.findByUsuarioIdUsuarioOrderByFechaReservaAscHoraInicioAsc(usuarioAutenticado.idUsuario);
+        }
     }
 
     public Reserva obtenerReserva(int reservationId, Authentication authentication) {
