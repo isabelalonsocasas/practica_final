@@ -1,4 +1,4 @@
-package edu.comillas.icai.gitt.pat.spring.practica_final.RECORDS;
+/*package edu.comillas.icai.gitt.pat.spring.practica_final.RECORDS;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -57,3 +57,5 @@ public record Usuario(
 
 
 }
+
+ */

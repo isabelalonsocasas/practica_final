@@ -1,4 +1,4 @@
-package edu.comillas.icai.gitt.pat.spring.practica_final.RECORDS;
+/*package edu.comillas.icai.gitt.pat.spring.practica_final.RECORDS;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -63,3 +63,5 @@ public record Reserva(
         );
     }
 }
+
+ */

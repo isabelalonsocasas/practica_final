@@ -1,4 +1,4 @@
-package edu.comillas.icai.gitt.pat.spring.practica_final.RECORDS;
+/*package edu.comillas.icai.gitt.pat.spring.practica_final.RECORDS;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -33,3 +33,5 @@ public record Pista(
     }
 
 }
+
+ */

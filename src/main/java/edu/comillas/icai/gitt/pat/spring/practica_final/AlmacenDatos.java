@@ -1,4 +1,4 @@
-package edu.comillas.icai.gitt.pat.spring.practica_final;
+/*package edu.comillas.icai.gitt.pat.spring.practica_final;
 
 import edu.comillas.icai.gitt.pat.spring.practica_final.RECORDS.Pista;
 import edu.comillas.icai.gitt.pat.spring.practica_final.RECORDS.Reserva;
@@ -69,3 +69,5 @@ public class AlmacenDatos
     }
 
 }
+
+ */

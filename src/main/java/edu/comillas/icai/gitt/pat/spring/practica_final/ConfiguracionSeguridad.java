@@ -1,6 +1,9 @@
 package edu.comillas.icai.gitt.pat.spring.practica_final;
 
-import edu.comillas.icai.gitt.pat.spring.practica_final.RECORDS.Usuario;
+
+import edu.comillas.icai.gitt.pat.spring.practica_final.entidad.Usuario;
+import edu.comillas.icai.gitt.pat.spring.practica_final.repositorio.RepoUsuario;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -16,26 +19,31 @@ import org.springframework.security.web.SecurityFilterChain;
 public class ConfiguracionSeguridad {
 
     //AÑADIMOS EL ALMACEN DE DATOS
-    private final AlmacenDatos almacen;
+    //private final AlmacenDatos almacen;
 
-    public ConfiguracionSeguridad(AlmacenDatos almacen) {
+    /*public ConfiguracionSeguridad(AlmacenDatos almacen) {
         this.almacen = almacen;
     }
+     */
+
+    @Autowired
+    RepoUsuario repoUsuario;
 
     @Bean
     public UserDetailsService userDetailsService() {
         return username -> {
 
-            Usuario u = almacen.buscarPorEmail(username);
+            //Usuario u = almacen.buscarPorEmail(username);
+            Usuario u = repoUsuario.findByEmail(username);
 
             if (u == null) {
                 throw new UsernameNotFoundException("Usuario no encontrado");
             }
 
             return User.withDefaultPasswordEncoder()
-                    .username(u.email())
-                    .password(u.password()) // contraseña en texto plano
-                    .roles(u.rol().nombreRol().name()) // USER o ADMIN
+                    .username(u.email)
+                    .password(u.password) // contraseña en texto plano
+                    .roles(u.rol.nombreRol.name()) // USER o ADMIN
                     .build();
         };
     }

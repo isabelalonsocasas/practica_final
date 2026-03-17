@@ -12,6 +12,6 @@ public interface RepoReserva extends CrudRepository<Reserva, Long> {
     List<Reserva> findByUsuario(Usuario usuario); //Reservas por usuario
     List<Reserva> findByPista(Pista pista); //Reservas por pista
     List<Reserva> findByEstado(Reserva.Estado estado);
-    boolean existsByIdPistaAndFechaReservaAfter(int idPista, LocalDate fecha);//Reservas por estado
+    boolean existsByPista_IdPistaAndFechaReservaAfter(long idPista, LocalDate fecha);//Reservas por estado
 
 }

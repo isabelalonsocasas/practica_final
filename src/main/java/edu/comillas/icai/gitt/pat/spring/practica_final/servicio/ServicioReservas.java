@@ -1,5 +1,8 @@
 package edu.comillas.icai.gitt.pat.spring.practica_final.servicio;
 
+import edu.comillas.icai.gitt.pat.spring.practica_final.entidad.Pista;
+import edu.comillas.icai.gitt.pat.spring.practica_final.entidad.Reserva;
+import edu.comillas.icai.gitt.pat.spring.practica_final.entidad.Usuario;
 import edu.comillas.icai.gitt.pat.spring.practica_final.repositorio.RepoPista;
 import edu.comillas.icai.gitt.pat.spring.practica_final.repositorio.RepoReserva;
 import edu.comillas.icai.gitt.pat.spring.practica_final.repositorio.RepoRol;
@@ -14,7 +17,11 @@ import java.util.Comparator;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class ServicioReservas {
@@ -27,20 +34,20 @@ public class ServicioReservas {
     @Autowired
     RepoUsuario repoUsuario;
 
-    private boolean haySolape(int idPista, LocalDate fechaReserva, LocalTime horaInicioNueva, int duracionMinutosNueva) {
+    private boolean haySolape(long idPista, LocalDate fechaReserva, LocalTime horaInicioNueva, int duracionMinutosNueva) {
 
         LocalTime horaFinNueva = horaInicioNueva.plusMinutes(duracionMinutosNueva);
 
         List<Reserva> reservas = new ArrayList<>();
-        repoReservas.findAll().forEach(reservas::add);
+        repoReserva.findAll().forEach(reservas::add);
 
         for (Reserva reservaExistente : reservas) {
 
-            if (reservaExistente.idPista() != idPista) continue;
-            if (!reservaExistente.fechaReserva().equals(fechaReserva)) continue;
+            if (reservaExistente.pista.idPista!= (long) idPista) continue;
+            if (!reservaExistente.fechaReserva.equals(fechaReserva)) continue;
 
-            LocalTime horaInicioExistente = reservaExistente.horaInicio();
-            LocalTime horaFinExistente = reservaExistente.horaFin();
+            LocalTime horaInicioExistente = reservaExistente.horaInicio;
+            LocalTime horaFinExistente = reservaExistente.horaFin;
 
             boolean solapa = horaInicioExistente.isBefore(horaFinNueva)
                     && horaFinExistente.isAfter(horaInicioNueva);
@@ -51,14 +58,14 @@ public class ServicioReservas {
         return false;
     }
 
-    public Reserva crearReserva(ReservaBody reserva, Authentication authentication) {
+    public Reserva crearReserva(Reserva reserva, Authentication authentication) {
 
-        Pista pista = repoPista.findById(reserva.idPista()).orElse(null);
+        Pista pista = repoPista.findById(reserva.pista.idPista).orElse(null);
         if (pista == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Pista no existe");
         }
 
-        if (haySolape(reserva.idPista(), reserva.fechaReserva(), reserva.horaInicio(), reserva.duracionMinutos())) {
+        if (haySolape(reserva.pista.idPista, reserva.fechaReserva, reserva.horaInicio, reserva.duracionMinutos)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Slot ocupado");
         }
 
@@ -68,16 +75,13 @@ public class ServicioReservas {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No autenticado");
         }
 
-        Reserva nueva = new Reserva(
-                null,
-                u.idUsuario(),
-                reserva.idPista(),
-                reserva.fechaReserva(),
-                reserva.horaInicio(),
-                reserva.duracionMinutos()
-        );
+        Reserva nueva = new Reserva();
+        nueva.usuario=u;
+        nueva.pista=pista;
+        nueva.horaInicio=reserva.horaInicio;
+        nueva.duracionMinutos=reserva.duracionMinutos;
 
-        return repoReservas.save(nueva);
+        return repoReserva.save(nueva);
     }
 
     public List<Reserva> misReservas(String from, String to, Authentication authentication) {
@@ -107,19 +111,19 @@ public class ServicioReservas {
         final LocalDate hastaFinal = hasta;
 
         List<Reserva> reservas = new ArrayList<>();
-        repoReservas.findAll().forEach(reservas::add);
+        repoReserva.findAll().forEach(reservas::add);
 
         return reservas.stream()
-                .filter(r -> r.idUsuario() == usuarioAutenticado.idUsuario())
-                .filter(r -> desdeFinal == null || !r.fechaReserva().isBefore(desdeFinal))
-                .filter(r -> hastaFinal == null || !r.fechaReserva().isAfter(hastaFinal))
-                .sorted(Comparator.comparing(Reserva::fechaReserva).thenComparing(Reserva::horaInicio))
+                .filter(r -> r.usuario.idUsuario.equals(usuarioAutenticado.idUsuario))
+                .filter(r -> desdeFinal == null || !r.fechaReserva.isBefore(desdeFinal))
+                .filter(r -> hastaFinal == null || !r.fechaReserva.isAfter(hastaFinal))
+                .sorted(Comparator.comparing((Reserva r) -> r.fechaReserva).thenComparing((Reserva r) -> r.horaInicio))
                 .toList();
     }
 
     public Reserva obtenerReserva(int reservationId, Authentication authentication) {
 
-        Reserva actual = repoReservas.findById(reservationId).orElse(null);
+        Reserva actual = repoReserva.findById((long)reservationId).orElse(null);
         if (actual == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Reserva no existe");
         }
@@ -130,7 +134,7 @@ public class ServicioReservas {
         boolean esAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
-        boolean esDueno = (usuarioAutenticado != null) && (actual.idUsuario() == usuarioAutenticado.idUsuario());
+        boolean esDueno = (usuarioAutenticado != null) && (actual.usuario.idUsuario == usuarioAutenticado.idUsuario);
 
         if (!esAdmin && !esDueno) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No autorizado");
@@ -141,7 +145,7 @@ public class ServicioReservas {
 
     public void cancelarReserva(int reservationId, Authentication authentication) {
 
-        Reserva actual = repoReservas.findById(reservationId).orElse(null);
+        Reserva actual = repoReserva.findById((long)reservationId).orElse(null);
         if (actual == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Reserva no existe");
         }
@@ -152,13 +156,13 @@ public class ServicioReservas {
         boolean esAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
-        boolean esDueno = (usuarioAutenticado != null) && (actual.idUsuario() == usuarioAutenticado.idUsuario());
+        boolean esDueno = (usuarioAutenticado != null) && (actual.usuario.idUsuario == usuarioAutenticado.idUsuario);
 
         if (!esAdmin && !esDueno) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No autorizado");
         }
 
-        if (actual.estado() == Reserva.Estado.CANCELADA) {
+        if (actual.estado == Reserva.Estado.CANCELADA) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "La reserva ya está cancelada");
         }
 
@@ -166,29 +170,19 @@ public class ServicioReservas {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede cancelar por política");
         }
 
-        Reserva cancelada = new Reserva(
-                actual.idReserva(),
-                actual.idUsuario(),
-                actual.idPista(),
-                actual.fechaReserva(),
-                actual.horaInicio(),
-                actual.duracionMinutos(),
-                actual.horaFin(),
-                Reserva.Estado.CANCELADA,
-                actual.fechaCreacion()
-        );
+        actual.estado = Reserva.Estado.CANCELADA;
 
-        repoReservas.save(cancelada);
+        repoReserva.save(actual);
     }
 
     private boolean yaHaEmpezado(Reserva r) {
-        LocalDateTime inicio = LocalDateTime.of(r.fechaReserva(), r.horaInicio());
+        LocalDateTime inicio = LocalDateTime.of(r.fechaReserva, r.horaInicio);
         return inicio.isBefore(LocalDateTime.now());
     }
 
-    public ResponseEntity<Reserva> modificarReserva(int idReserva, ReservaBody reservaCambio, Authentication authentication) {
+    public ResponseEntity<Reserva> modificarReserva(int idReserva, Reserva reservaCambio, Authentication authentication) {
 
-        Reserva reserva = repoReservas.findById(idReserva).orElse(null);
+        Reserva reserva = repoReserva.findById((long)idReserva).orElse(null);
         if (reserva == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Reserva no existe");
         }
@@ -199,54 +193,52 @@ public class ServicioReservas {
         boolean esAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
-        boolean esDueno = (usuarioAutenticado != null) && (reserva.idUsuario() == usuarioAutenticado.idUsuario());
+        boolean esDueno = (usuarioAutenticado != null) && (reserva.usuario.idUsuario == usuarioAutenticado.idUsuario);
 
         if (!esAdmin && !esDueno) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No autorizado");
         }
 
-        Pista pista = repoPista.findById(reservaCambio.idPista()).orElse(null);
+        Pista pista = repoPista.findById(reservaCambio.pista.idPista).orElse(null);
         if (pista == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Pista no existe");
         }
 
         if (haySolapeModificacion(idReserva,
-                reservaCambio.idPista(),
-                reservaCambio.fechaReserva(),
-                reservaCambio.horaInicio(),
-                reservaCambio.duracionMinutos())) {
+                reservaCambio.pista.idPista,
+                reservaCambio.fechaReserva,
+                reservaCambio.horaInicio,
+                reservaCambio.duracionMinutos)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Slot ocupado");
         }
 
-        Reserva reservaCambiada = new Reserva(
-                idReserva,
-                usuarioAutenticado.idUsuario(),
-                reservaCambio.idPista(),
-                reservaCambio.fechaReserva(),
-                reservaCambio.horaInicio(),
-                reservaCambio.duracionMinutos()
-        );
+        reserva.usuario = usuarioAutenticado;
+        reserva.pista = pista;
+        reserva.fechaReserva = reservaCambio.fechaReserva;
+        reserva.horaInicio = reservaCambio.horaInicio;
+        reserva.duracionMinutos = reservaCambio.duracionMinutos;
+        reserva.horaFin = reservaCambio.horaInicio.plusMinutes(reservaCambio.duracionMinutos);
 
-        repoReservas.save(reservaCambiada);
+        repoReserva.save(reserva);
 
-        return ResponseEntity.ok(reservaCambiada);
+        return ResponseEntity.ok(reservaCambio);
     }
 
-    private boolean haySolapeModificacion(int idReserva, int idPista, LocalDate fechaReserva, LocalTime horaInicioNueva, int duracionMinutosNueva) {
+    private boolean haySolapeModificacion(long idReserva, long idPista, LocalDate fechaReserva, LocalTime horaInicioNueva, int duracionMinutosNueva) {
 
         LocalTime horaFinNueva = horaInicioNueva.plusMinutes(duracionMinutosNueva);
 
         List<Reserva> reservas = new ArrayList<>();
-        repoReservas.findAll().forEach(reservas::add);
+        repoReserva.findAll().forEach(reservas::add);
 
         for (Reserva reservaExistente : reservas) {
 
-            if (reservaExistente.idReserva() == idReserva) continue;
-            if (reservaExistente.idPista() != idPista) continue;
-            if (!reservaExistente.fechaReserva().equals(fechaReserva)) continue;
+            if (reservaExistente.idReserva == idReserva) continue;
+            if (reservaExistente.pista.idPista != idPista) continue;
+            if (!reservaExistente.fechaReserva.equals(fechaReserva)) continue;
 
-            LocalTime horaInicioExistente = reservaExistente.horaInicio();
-            LocalTime horaFinExistente = reservaExistente.horaFin();
+            LocalTime horaInicioExistente = reservaExistente.horaInicio;
+            LocalTime horaFinExistente = reservaExistente.horaFin;
 
             boolean solapa = horaInicioExistente.isBefore(horaFinNueva)
                     && horaFinExistente.isAfter(horaInicioNueva);
@@ -260,12 +252,12 @@ public class ServicioReservas {
     public ResponseEntity<List<Reserva>> getReservas(LocalDate fecha, Integer pista, Integer user) {
 
         List<Reserva> reservas = new ArrayList<>();
-        repoReservas.findAll().forEach(reservas::add);
+        repoReserva.findAll().forEach(reservas::add);
 
         List<Reserva> reservasFiltro = reservas.stream()
-                .filter(r -> fecha == null || r.fechaReserva().equals(fecha))
-                .filter(r -> pista == null || r.idPista() == pista)
-                .filter(r -> user == null || r.idUsuario() == user)
+                .filter(r -> fecha == null || r.fechaReserva.equals(fecha))
+                .filter(r -> pista == null || r.pista.idPista == (long)pista)
+                .filter(r -> user == null || r.usuario.idUsuario == (long)user)
                 .toList();
 
         return ResponseEntity.ok(reservasFiltro);

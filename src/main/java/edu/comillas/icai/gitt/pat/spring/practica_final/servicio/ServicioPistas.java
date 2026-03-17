@@ -105,7 +105,7 @@ public class ServicioPistas {
             );
         }
 
-        if (repoReserva.existsByIdPistaAndFechaReservaAfter(idPista, LocalDate.now())) {
+        if (repoReserva.existsByPista_IdPistaAndFechaReservaAfter(idPista, LocalDate.now())) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "No se puede desactivar: hay reservas futuras"
@@ -137,11 +137,11 @@ public class ServicioPistas {
         repoPista.findAll().forEach(pistas::add);
 
         return pistas.stream()
-                .filter(p -> courtId == null || p.idPista() == courtId)
+                .filter(p -> courtId == null || p.idPista == (long) courtId)
                 .map(p -> {
                     Map<String, Object> pistaInfo = new HashMap<>();
-                    pistaInfo.put("nombre", p.nombre());
-                    pistaInfo.put("disponibilidad", obtenerDisponibilidadPista(p.idPista(), fechaConsulta));
+                    pistaInfo.put("nombre", p.nombre);
+                    pistaInfo.put("disponibilidad", obtenerDisponibilidadPista(p.idPista, fechaConsulta));
                     return pistaInfo;
                 })
                 .toList();
@@ -160,7 +160,7 @@ public class ServicioPistas {
             );
         }
 
-        Pista pista = repoPista.findById(courtId).orElse(null);
+        Pista pista = repoPista.findById((long)courtId).orElse(null);
 
         if (pista == null) {
             throw new ResponseStatusException(
@@ -169,22 +169,22 @@ public class ServicioPistas {
             );
         }
 
-        List<String> disponibilidad = obtenerDisponibilidadPista(courtId, fechaConsulta);
+        List<String> disponibilidad = obtenerDisponibilidadPista((long)courtId, fechaConsulta);
 
         Map<String, Object> infoPista = new HashMap<>();
-        infoPista.put("nombre", pista.nombre());
+        infoPista.put("nombre", pista.nombre);
         infoPista.put("disponibilidad", disponibilidad);
 
         return infoPista;
     }
 
-    private List<String> obtenerDisponibilidadPista(Integer courtId, LocalDate fechaConsulta) {
+    private List<String> obtenerDisponibilidadPista(Long courtId, LocalDate fechaConsulta) {
 
         List<Reserva> reservas = new ArrayList<>();
         repoReserva.findAll().forEach(reservas::add);
 
         List<Reserva> reservasPista = reservas.stream()
-                .filter(r -> r.idPista() == courtId && r.fechaReserva().equals(fechaConsulta))
+                .filter(r -> r.pista.idPista == courtId && r.fechaReserva.equals(fechaConsulta))
                 .toList();
 
         List<String> disponibilidad = new ArrayList<>();
@@ -197,7 +197,7 @@ public class ServicioPistas {
 
         for (String franja : franjas) {
             boolean ocupada = reservasPista.stream()
-                    .anyMatch(r -> r.horaInicio().toString().equals(franja));
+                    .anyMatch(r -> r.horaInicio.toString().equals(franja));
 
             if (!ocupada) {
                 disponibilidad.add(franja);

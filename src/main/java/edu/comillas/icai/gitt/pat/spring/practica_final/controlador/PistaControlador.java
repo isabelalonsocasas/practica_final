@@ -1,5 +1,6 @@
 package edu.comillas.icai.gitt.pat.spring.practica_final.controlador;
 
+import edu.comillas.icai.gitt.pat.spring.practica_final.entidad.Pista;
 import edu.comillas.icai.gitt.pat.spring.practica_final.servicio.ServicioPistas;
 import edu.comillas.icai.gitt.pat.spring.practica_final.servicio.ServicioReservas;
 import edu.comillas.icai.gitt.pat.spring.practica_final.servicio.ServicioUsuarios;
@@ -7,8 +8,12 @@ import edu.comillas.icai.gitt.pat.spring.practica_final.servicio.ServicioUsuario
 import java.util.List;
 import java.util.Map;
 
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
 
 @Controller
 public class PistaControlador {
