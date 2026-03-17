@@ -180,12 +180,7 @@ public class ServicioPistas {
 
     private List<String> obtenerDisponibilidadPista(Long courtId, LocalDate fechaConsulta) {
 
-        List<Reserva> reservas = new ArrayList<>();
-        repoReserva.findAll().forEach(reservas::add);
-
-        List<Reserva> reservasPista = reservas.stream()
-                .filter(r -> r.pista.idPista == courtId && r.fechaReserva.equals(fechaConsulta))
-                .toList();
+        List<Reserva> reservasPista = repoReserva.findByPista_IdPistaAndFechaReserva(courtId,fechaConsulta);
 
         List<String> disponibilidad = new ArrayList<>();
 
