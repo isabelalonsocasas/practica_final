@@ -38,11 +38,11 @@ public class UsuarioControlador {
 
     //Get usuario autenticado (completado)
     @GetMapping("/pistaPadel/auth/me")
-    public ResponseEntity<edu.comillas.icai.gitt.pat.spring.practica_final.entidad.Usuario> usuarioAutenticado(Authentication authentication) {
+    public ResponseEntity<Usuario> usuarioAutenticado(Authentication authentication) {
 
         String email = authentication.getName(); // username = email
 
-        edu.comillas.icai.gitt.pat.spring.practica_final.entidad.Usuario u = repoUsuario.findByEmail(email);
+        Usuario u = repoUsuario.findByEmail(email);
 
         return ResponseEntity.ok(u);
     }
