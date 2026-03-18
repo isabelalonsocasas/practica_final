@@ -59,4 +59,10 @@ public class UsuarioControlador {
     public ResponseEntity<Usuario> obtenerUsuario(@PathVariable Long userId, Authentication authentication) {
         return servicioUsuarios.getUsuario(userId, authentication);
     }
+
+    //Patch actualizar datos de usuario (completado)
+    @PatchMapping("/pistaPadel/users/{userId}")
+    public ResponseEntity<Usuario> actualizarUsuario(@PathVariable Long userId, @Valid @RequestBody Usuario usuarioActualizado, Authentication authentication) {
+        return servicioUsuarios.actualizaUsuario(userId, usuarioActualizado, authentication);
+    }
 }
