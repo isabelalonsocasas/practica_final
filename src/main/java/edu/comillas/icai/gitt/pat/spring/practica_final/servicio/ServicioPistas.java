@@ -77,8 +77,9 @@ public class ServicioPistas {
             );
         }
 
-        if (pistaActualizada.nombre != null && !pista.nombre.equalsIgnoreCase(pistaActualizada.nombre)) {
+        if (!pista.nombre.equalsIgnoreCase(pistaActualizada.nombre)) {
             // Si ha cambiado, verificamos que no esté cogido por OTRA pista distinta
+
             if (repoPista.existsByNombreIgnoreCaseAndIdPistaNot(pistaActualizada.nombre, idPista)) {
                 throw new ResponseStatusException(
                         HttpStatus.CONFLICT,
