@@ -36,34 +36,33 @@ public class PistaControlador {
     }
 
     @GetMapping("/pistaPadel/courts/{courtId}")
-    public ResponseEntity<Pista> getInfoPista(@PathVariable Integer courtId) {
+    public ResponseEntity<Pista> getInfoPista(@PathVariable Long courtId) {
         return servicioPistas.getInfoPista(courtId);
     }
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/pistaPadel/courts/{courtId}")
-    public ResponseEntity<Pista> actualizarPista(@PathVariable int courtId,
-                                                @Valid @RequestBody Pista datosActualizados) {
+    public ResponseEntity<Pista> actualizarPista(@PathVariable Long courtId,
+                                                 @Valid @RequestBody Pista datosActualizados) {
         return servicioPistas.actualizarPista(courtId, datosActualizados);
     }
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/pistaPadel/courts/{courtId}")
-    public ResponseEntity<Void> desactivarPista(@PathVariable int courtId) {
-        return servicioPistas.desactivarPista(courtId);
+    public ResponseEntity<Void> eliminarPista(@PathVariable Long courtId) {
+        return servicioPistas.eliminarPista(courtId);
     }
 
     @GetMapping("/pistaPadel/availability")
     public List<Map<String, Object>> consultarDisponibilidad(
             @RequestParam String date,
-            @RequestParam(required = false) Integer courtId) {
+            @RequestParam(required = false) Long courtId) {
         return servicioPistas.consultarDisponibilidad(date, courtId);
     }
 
     @GetMapping("/pistaPadel/courts/{courtId}/availability")
     public Map<String, Object> consultarDisponibilidadPista(
             @RequestParam String date,
-            @PathVariable Integer courtId) {
+            @PathVariable Long courtId) {
         return servicioPistas.consultarDisponibilidadPista(date, courtId);
     }
 
-    
 }

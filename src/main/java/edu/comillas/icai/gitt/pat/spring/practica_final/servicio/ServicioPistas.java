@@ -30,10 +30,22 @@ public class ServicioPistas {
     RepoRol repoRol;
     @Autowired
     RepoUsuario repoUsuario;
-    
+
+
+    public Pista idPistaExiste(Long idPista) {
+        Pista pista = repoPista.findById((long) idPista).orElse(null);
+
+        if (pista == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Pista no encontrada"
+            );
+        }
+        return pista;
+    }
 
     public ResponseEntity<Pista> crearPista(Pista pista) {
-    Pista pistaExistente = repoPista.findByNombre(pista.nombre);
+        Pista pistaExistente = repoPista.findByNombre(pista.nombre);
 
         if (pistaExistente != null) {
             throw new ResponseStatusException(
@@ -53,29 +65,15 @@ public class ServicioPistas {
         return repoPista.findByActiva(active);
     }
 
-    public ResponseEntity<Pista> getInfoPista(Integer idPista) {
-        Pista pista = repoPista.findById((long)(idPista)).orElse(null);
-
-        if (pista == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "Pista no encontrada"
-            );
-        }
+    public ResponseEntity<Pista> getInfoPista(Long idPista) {
+        Pista pista = idPistaExiste(idPista);
 
         return ResponseEntity.ok(pista);
     }
 
-    public ResponseEntity<Pista> actualizarPista(long idPista, Pista pistaActualizada) {
+    public ResponseEntity<Pista> actualizarPista(Long idPista, Pista pistaActualizada) {
 
-        Pista pista = repoPista.findById(idPista).orElse(null);
-
-        if (pista == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "Pista no encontrada"
-            );
-        }
+        Pista pista = idPistaExiste(idPista);
 
         if (!pista.nombre.equalsIgnoreCase(pistaActualizada.nombre)) {
             // Si ha cambiado, verificamos que no esté cogido por OTRA pista distinta
@@ -98,24 +96,16 @@ public class ServicioPistas {
         return ResponseEntity.ok(pista);
     }
 
-    public ResponseEntity<Void> desactivarPista(int idPista) {
+    public ResponseEntity<Void> eliminarPista(Long idPista) {
+        Pista pista = idPistaExiste(idPista);
+        repoPista.delete(pista);
 
-        Pista pista = repoPista.findById((long) idPista).orElse(null);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
 
-        if (pista == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "Pista no encontrada"
-            );
-        }
+    public ResponseEntity<Void> desactivarPista(Long idPista) {
 
-        if (repoReserva.existsByPista_IdPistaAndFechaReservaAfter(idPista, LocalDate.now())) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "No se puede desactivar: hay reservas futuras"
-            );
-        }
-
+        Pista pista = idPistaExiste(idPista);
 
         pista.activa = false;
 
@@ -124,7 +114,7 @@ public class ServicioPistas {
         return ResponseEntity.noContent().build();
     }
 
-    public List<Map<String, Object>> consultarDisponibilidad(String date, Integer courtId) {
+    public List<Map<String, Object>> consultarDisponibilidad(String date, Long idPista) {
 
         LocalDate fechaConsulta;
 
@@ -141,7 +131,7 @@ public class ServicioPistas {
         repoPista.findAll().forEach(pistas::add);
 
         return pistas.stream()
-                .filter(p -> courtId == null || p.idPista == (long) courtId)
+                .filter(p -> idPista == null || p.idPista == (long) idPista)
                 .map(p -> {
                     Map<String, Object> pistaInfo = new HashMap<>();
                     pistaInfo.put("nombre", p.nombre);
@@ -151,7 +141,7 @@ public class ServicioPistas {
                 .toList();
     }
 
-    public Map<String, Object> consultarDisponibilidadPista(String date, Integer courtId) {
+    public Map<String, Object> consultarDisponibilidadPista(String date, Long courtId) {
 
         LocalDate fechaConsulta;
 
@@ -206,4 +196,3 @@ public class ServicioPistas {
         return disponibilidad;
     }
 }
-
