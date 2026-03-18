@@ -1,6 +1,7 @@
 package edu.comillas.icai.gitt.pat.spring.practica_final.servicio;
 
 import edu.comillas.icai.gitt.pat.spring.practica_final.entidad.Pista;
+import edu.comillas.icai.gitt.pat.spring.practica_final.entidad.Rol;
 import edu.comillas.icai.gitt.pat.spring.practica_final.entidad.Usuario;
 import edu.comillas.icai.gitt.pat.spring.practica_final.repositorio.RepoPista;
 import edu.comillas.icai.gitt.pat.spring.practica_final.repositorio.RepoReserva;
@@ -30,8 +31,8 @@ public class ServicioUsuarios {
     ///  Métodos usuario
 
     //Registrarse (completado)
-    public ResponseEntity<Usuario> registrarUsuario(Usuario NuevoUsuario) {
-        Usuario usuario = repoUsuario.findByEmail(NuevoUsuario.email);
+    public ResponseEntity<Usuario> registrarUsuario(Usuario nuevoUsuario) {
+        Usuario usuario = repoUsuario.findByEmail(nuevoUsuario.email);
 
         if (usuario != null) {
             throw new ResponseStatusException(
@@ -39,8 +40,9 @@ public class ServicioUsuarios {
                     "El email ya existe"
             );
         }
-        repoUsuario.save(NuevoUsuario);
-        return ResponseEntity.status(HttpStatus.CREATED).body(NuevoUsuario); //Refleja 201 created y el usuario
+
+        repoUsuario.save(nuevoUsuario);
+        return ResponseEntity.status(HttpStatus.CREATED).body(nuevoUsuario); //Refleja 201 created y el usuario
     }
 
     //Logueado
