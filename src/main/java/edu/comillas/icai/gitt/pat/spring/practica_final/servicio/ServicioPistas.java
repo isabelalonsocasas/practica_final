@@ -66,9 +66,9 @@ public class ServicioPistas {
         return ResponseEntity.ok(pista);
     }
 
-    public ResponseEntity<Pista> actualizarPista(int idPista, Pista pistaActualizada) {
+    public ResponseEntity<Pista> actualizarPista(long idPista, Pista pistaActualizada) {
 
-        Pista pista = repoPista.findById((long) idPista).orElse(null);
+        Pista pista = repoPista.findById(idPista).orElse(null);
 
         if (pista == null) {
             throw new ResponseStatusException(
