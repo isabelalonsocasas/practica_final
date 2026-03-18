@@ -146,7 +146,6 @@ public class ServicioUsuarios {
         usuarioExistente.rol = usuarioActualizado.rol;
         usuarioExistente.fechaRegistro = usuarioActualizado.fechaRegistro;
         usuarioExistente.activo = usuarioActualizado.activo;
-        usuarioExistente.reservas = usuarioActualizado.reservas;
 
         repoUsuario.save(usuarioExistente);
 
