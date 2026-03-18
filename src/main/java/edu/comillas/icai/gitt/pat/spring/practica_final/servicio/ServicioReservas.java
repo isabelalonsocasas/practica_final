@@ -75,7 +75,16 @@ public class ServicioReservas {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No autenticado");
         }
 
-        return repoReserva.save(reserva);
+        Reserva nueva = new Reserva();
+        nueva.usuario = u;
+        nueva.pista = pista;
+        nueva.fechaReserva = reserva.fechaReserva;
+        nueva.horaInicio = reserva.horaInicio;
+        nueva.duracionMinutos = reserva.duracionMinutos;
+        nueva.horaFin = reserva.horaInicio.plusMinutes(reserva.duracionMinutos);
+        nueva.estado = Reserva.Estado.ACTIVA;
+
+        return repoReserva.save(nueva);
     }
 
     public List<Reserva> misReservas(String from, String to, Authentication authentication) {
