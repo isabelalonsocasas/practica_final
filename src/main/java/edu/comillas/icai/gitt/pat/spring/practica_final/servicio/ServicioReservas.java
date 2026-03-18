@@ -224,7 +224,7 @@ public class ServicioReservas {
 
         repoReserva.save(reserva);
 
-        return ResponseEntity.ok(reservaCambio);
+        return ResponseEntity.ok(reserva);
     }
 
     private boolean haySolapeModificacion(long idReserva, long idPista, LocalDate fechaReserva, LocalTime horaInicioNueva, int duracionMinutosNueva) {
