@@ -86,7 +86,7 @@ public class PadelControlador {
     }
 
     /// Métodos users
-    // Get users(completado)
+    // Get users
     @GetMapping("/pistaPadel/users")
     @PreAuthorize("hasRole('ADMIN')")// Comprobar autorización de ADMIN
     public Map<Integer, Usuario> getUsuarios(){
