@@ -41,6 +41,19 @@ public class ServicioUsuarios {
             );
         }
 
+        if (nuevoUsuario.rol != null && nuevoUsuario.rol.idRol != null) {
+            Rol rol = repoRol.findById(nuevoUsuario.rol.idRol).orElse(null);
+
+            if (rol == null) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "El ID de rol proporcionado no existe"
+                );
+            }
+            // Sustituimos el rol incompleto por el rol lleno de datos
+            nuevoUsuario.rol = rol;
+        }
+
         repoUsuario.save(nuevoUsuario);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevoUsuario); //Refleja 201 created y el usuario
     }
