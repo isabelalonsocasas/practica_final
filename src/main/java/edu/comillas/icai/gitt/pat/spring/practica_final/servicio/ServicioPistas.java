@@ -66,9 +66,9 @@ public class ServicioPistas {
         return ResponseEntity.ok(pista);
     }
 
-    public ResponseEntity<Pista> actualizarPista(int idPista, Pista pistaActualizada) {
+    public ResponseEntity<Pista> actualizarPista(long idPista, Pista pistaActualizada) {
 
-        Pista pista = repoPista.findById((long) idPista).orElse(null);
+        Pista pista = repoPista.findById(idPista).orElse(null);
 
         if (pista == null) {
             throw new ResponseStatusException(
@@ -77,11 +77,14 @@ public class ServicioPistas {
             );
         }
 
-        if (repoPista.existsByNombreIgnoreCaseAndIdPistaNot(pistaActualizada.nombre, idPista)) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "El nombre nuevo de la pista ya está siendo utilizado"
-            );
+        if (pistaActualizada.nombre != null && !pista.nombre.equalsIgnoreCase(pistaActualizada.nombre)) {
+            // Si ha cambiado, verificamos que no esté cogido por OTRA pista distinta
+            if (repoPista.existsByNombreIgnoreCaseAndIdPistaNot(pistaActualizada.nombre, idPista)) {
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "El nombre nuevo de la pista ya está siendo utilizado"
+                );
+            }
         }
 
         pista.nombre = pistaActualizada.nombre;
