@@ -17,7 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
-@Controller
+@RestController
 public class UsuarioControlador {
     @Autowired
     ServicioPistas servicioPistas;

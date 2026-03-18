@@ -57,6 +57,7 @@ public class ConfiguracionSeguridad {
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers("/pistaPadel/auth/register").permitAll() //No es necesario para el registro
                 .requestMatchers("/pistaPadel/auth/login").permitAll() //Se permite para loggearte
+                .requestMatchers("/h2-console/**").permitAll() //Para acceder a la base de datos
                 .anyRequest().authenticated() );//Las demás rutas exigen login
         //LOGIN
         http.formLogin(form -> form
