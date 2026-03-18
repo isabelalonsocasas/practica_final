@@ -46,9 +46,6 @@ public class Usuario {
     @Column(nullable = false)
     public boolean activo = true;
 
-    @OneToMany
-    public List<Reserva> reservas = new ArrayList<>();
-
 
     public Usuario() {
         if (this.fechaRegistro == null) {
