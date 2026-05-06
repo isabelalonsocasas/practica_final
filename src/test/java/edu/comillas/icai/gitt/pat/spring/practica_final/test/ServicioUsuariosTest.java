@@ -20,13 +20,13 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class ServicioUsuariosTest {
 
-    @Mock
+    @Mock //Simular objetos
     private RepoUsuario repoUsuario;
 
     @Mock
     private RepoRol repoRol;
 
-    @InjectMocks
+    @InjectMocks //Clase que queremos testear
     private ServicioUsuarios servicioUsuarios;
 
     @Test
