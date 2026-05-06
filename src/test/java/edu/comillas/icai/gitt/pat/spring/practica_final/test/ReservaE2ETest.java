@@ -1,4 +1,4 @@
-package edu.comillas.icai.gitt.pat.spring.practica_final;
+package edu.comillas.icai.gitt.pat.spring.practica_final.test;
 
 import edu.comillas.icai.gitt.pat.spring.practica_final.entidad.Pista;
 import edu.comillas.icai.gitt.pat.spring.practica_final.entidad.Rol;
