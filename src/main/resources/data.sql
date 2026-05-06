@@ -23,8 +23,8 @@ INSERT INTO pista (nombre, ubicacion, precio_hora, activa, fecha_alta)
 VALUES ('Pista 3', 'Complejo Sur - Exterior', 10.00, FALSE, CURRENT_TIMESTAMP);
 
 -- Reservas
-INSERT INTO reserva (usuario_id_usuario, pista_id_pista, fecha_reserva, hora_inicio, duracion_minutos, hora_fin, estado, fecha_creacion)
+INSERT INTO reserva (id_usuario, id_pista, fecha_reserva, hora_inicio, duracion_minutos, hora_fin, estado, fecha_creacion)
 VALUES (2, 1, '2026-03-20', '10:00:00', 90, '11:30:00', 'ACTIVA', CURRENT_TIMESTAMP);
 
-INSERT INTO reserva (usuario_id_usuario, pista_id_pista, fecha_reserva, hora_inicio, duracion_minutos, hora_fin, estado, fecha_creacion)
+INSERT INTO reserva (id_usuario, id_pista, fecha_reserva, hora_inicio, duracion_minutos, hora_fin, estado, fecha_creacion)
 VALUES (2, 2, '2026-03-22', '18:00:00', 60, '19:00:00', 'CANCELADA', CURRENT_TIMESTAMP);
