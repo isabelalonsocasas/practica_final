@@ -1,13 +1,10 @@
 package edu.comillas.icai.gitt.pat.spring.practica_final.controlador;
 
 import edu.comillas.icai.gitt.pat.spring.practica_final.entidad.Reserva;
-import edu.comillas.icai.gitt.pat.spring.practica_final.servicio.ServicioPistas;
 import edu.comillas.icai.gitt.pat.spring.practica_final.servicio.ServicioReservas;
-import edu.comillas.icai.gitt.pat.spring.practica_final.servicio.ServicioUsuarios;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,15 +12,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 public class ReservasControlador {
-    @Autowired
-    ServicioPistas servicioPistas;
-    @Autowired
-    ServicioUsuarios servicioUsuarios;
     @Autowired
     ServicioReservas servicioReservas;
 

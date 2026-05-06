@@ -3,21 +3,23 @@ package edu.comillas.icai.gitt.pat.spring.practica_final.entidad;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.Data;
 
 @Entity
+@Data
 public class Rol {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long idRol;
+    private Long idRol;
 
     @NotNull(message = "El nombre del rol es obligatorio")
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, unique = true)
-    public NombreRol nombreRol;
+    private NombreRol nombreRol;
 
     @NotBlank(message = "La descripción no puede estar vacía")
     @Column(nullable = false)
-    public String descripcion;
+    private String descripcion;
 
     public enum NombreRol {
         USER,

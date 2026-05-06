@@ -4,33 +4,43 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import lombok.Data;
+import lombok.ToString;
+
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
+@Data
 public class Pista {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long idPista;
+    private Long idPista;
 
     @NotBlank(message = "El nombre no puede estar vacío")
-    @Column(nullable = false)
-    public String nombre;
+    @Column(nullable = false, unique = true)
+    private String nombre;
 
     @NotBlank(message = "La ubicación no puede estar vacía")
     @Column(nullable = false)
-    public String ubicacion;
+    private String ubicacion;
 
     @Positive(message = "El precio por hora debe ser positivo")
     @Column(nullable = false)
-    public double precioHora;
+    private Double precioHora;
 
     @Column(nullable = false)
-    public boolean activa;
+    private boolean activa;
 
     @NotNull
     @Column(nullable = false)
-    public LocalDateTime fechaAlta;
+    private LocalDateTime fechaAlta;
+
+    @OneToMany(mappedBy = "pista", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    private List<Reserva> reservas;
+
 
     public Pista() {
         if (this.fechaAlta == null) {

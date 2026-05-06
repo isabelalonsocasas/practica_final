@@ -3,51 +3,56 @@ package edu.comillas.icai.gitt.pat.spring.practica_final.entidad;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import lombok.Data;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 @Entity
+@Data
 public class Reserva {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long idReserva;
+    private Long idReserva;
 
     @ManyToOne
-    public Usuario usuario;
+    @JoinColumn(name="id_usuario")
+    private Usuario usuario;
 
     @ManyToOne
-    public Pista pista;
+    @JoinColumn(name="id_pista")
+    private Pista pista;
 
     @NotNull(message = "La fecha de reserva es obligatoria")
     @Column(nullable = false)
-    public LocalDate fechaReserva;
+    private LocalDate fechaReserva;
 
     @NotNull(message = "La hora de inicio es obligatoria")
     @Column(nullable = false)
-    public LocalTime horaInicio;
+    private LocalTime horaInicio;
 
     @Positive(message = "La duración debe ser positiva")
     @Column(nullable = false)
-    public int duracionMinutos;
+    private Integer duracionMinutos;
 
-    public LocalTime horaFin;
+    private LocalTime horaFin;
 
-    @NotNull
+    @NotNull(message = "El estado es obligatorio")
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    public Estado estado = Estado.ACTIVA;
+    private Estado estado = Estado.ACTIVA;
 
     @Column(nullable = false)
-    public LocalDateTime fechaCreacion;
+    private LocalDateTime fechaCreacion;
 
     public enum Estado {
         ACTIVA,
         CANCELADA
     }
 
-    public Reserva() {
+    @PrePersist
+    public void Reserva() {
         if (this.fechaCreacion == null) {
             this.fechaCreacion = LocalDateTime.now();
         }
@@ -56,16 +61,5 @@ public class Reserva {
             this.horaFin = this.horaInicio.plusMinutes(this.duracionMinutos);
         }
     }
-
-//    @PrePersist
-//    public void calcularCamposPorDefecto() {
-//        if (this.fechaCreacion == null) {
-//            this.fechaCreacion = LocalDateTime.now();
-//        }
-//
-//        if (this.horaFin == null && this.horaInicio != null) {
-//            this.horaFin = this.horaInicio.plusMinutes(this.duracionMinutos);
-//        }
-//    }
 
 }
