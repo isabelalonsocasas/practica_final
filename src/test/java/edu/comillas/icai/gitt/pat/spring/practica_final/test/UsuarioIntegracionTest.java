@@ -30,7 +30,7 @@ class UsuarioIntegracionTest {
     @Autowired
     private RepoRol repoRol;
 
-    @BeforeEach
+    @BeforeEach // Se ejecuta antes de cada test para dejar todo en el mismo estado
     void prepararBD() {
         repoUsuario.deleteAll();
         repoRol.deleteAll();

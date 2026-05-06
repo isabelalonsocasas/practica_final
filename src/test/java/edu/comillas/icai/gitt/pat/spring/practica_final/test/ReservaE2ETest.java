@@ -1,6 +1,7 @@
 package edu.comillas.icai.gitt.pat.spring.practica_final.test;
 
 import edu.comillas.icai.gitt.pat.spring.practica_final.entidad.Pista;
+import edu.comillas.icai.gitt.pat.spring.practica_final.entidad.Reserva;
 import edu.comillas.icai.gitt.pat.spring.practica_final.entidad.Rol;
 import edu.comillas.icai.gitt.pat.spring.practica_final.entidad.Usuario;
 import edu.comillas.icai.gitt.pat.spring.practica_final.repositorio.RepoPista;
@@ -53,10 +54,11 @@ class ReservaE2ETest {
 		Usuario usuario = new Usuario();
 		usuario.setNombre("Gonzalo");
 		usuario.setApellidos("García");
-		usuario.setEmail("gonzalo@gmail.com");
+		usuario.setEmail("bibi@gmail.com");
 		usuario.setPassword("1234");
 		usuario.setTelefono("699000999");
 		usuario.setRol(rol);
+		usuario.setActivo(true);
 		repoUsuario.save(usuario);
 
 		// Pista para el test
@@ -78,29 +80,52 @@ class ReservaE2ETest {
 				"\"duracionMinutos\": 90" +
 				"}";
 
-		// POST
+		// LOGIN
+		HttpHeaders loginHeaders = new HttpHeaders();
+		loginHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+		String loginBody = "username=bibi@gmail.com&password=1234";
+
+		ResponseEntity<String> loginResponse = restTemplate.exchange(
+				"/pistaPadel/auth/login",
+				HttpMethod.POST,
+				new HttpEntity<>(loginBody, loginHeaders),
+				String.class
+		);
+
+		String cookie = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+
+		// POST reserva usando la cookie
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
+		headers.set(HttpHeaders.COOKIE, cookie);
 
-		ResponseEntity<String> responseCreate = authrestTemplate.exchange(
+		ResponseEntity<Reserva> responseCreate = restTemplate.exchange(
 				"/pistaPadel/reservations",
 				HttpMethod.POST,
 				new HttpEntity<>(json, headers),
-				String.class);
+				Reserva.class);
+
+		System.out.println("STATUS POST = " + responseCreate.getStatusCode());
+		System.out.println("BODY POST = " + responseCreate.getBody());
+
+		Long idReserva = responseCreate.getBody().getIdReserva();
 
 		// ASSERTS para verificar el POST
 		Assertions.assertEquals(HttpStatus.CREATED, responseCreate.getStatusCode());
 		Assertions.assertNotNull(responseCreate.getBody());
-		Assertions.assertFalse(responseCreate.getBody().isBlank());
-
+		// Assertions.assertFalse(responseCreate.getBody().isBlank());
 
 
 		// Ahora se hace el GET usando el ID real
 		ResponseEntity<String> responseGet = authrestTemplate.exchange(
-				"/pistaPadel/reservations/1",
+				"/pistaPadel/reservations/" + idReserva,
 				HttpMethod.GET,
 				new HttpEntity<>(headers),
 				String.class);
+
+		System.out.println("STATUS POST = " + responseGet.getStatusCode());
+		System.out.println("BODY POST = " + responseGet.getBody());
 
 		// Se verifica el codigo de estado de la respuesta
 		Assertions.assertEquals(HttpStatus.OK, responseGet.getStatusCode());
