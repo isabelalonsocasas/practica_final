@@ -20,5 +20,6 @@ public interface RepoReserva extends CrudRepository<Reserva, Long> {
     List<Reserva> findByUsuarioIdUsuarioAndFechaReservaGreaterThanEqualOrderByFechaReservaAscHoraInicioAsc(Long idUsuario, LocalDate desde);
     List<Reserva> findByUsuarioIdUsuarioAndFechaReservaLessThanEqualOrderByFechaReservaAscHoraInicioAsc(Long idUsuario, LocalDate hasta);
     List<Reserva> findByUsuarioIdUsuarioAndFechaReservaBetweenOrderByFechaReservaAscHoraInicioAsc(Long idUsuario, LocalDate desde, LocalDate hasta);
+    List<Reserva> findByFechaReservaAndEstado(LocalDate fecha, Reserva.Estado estado);
 
 }
