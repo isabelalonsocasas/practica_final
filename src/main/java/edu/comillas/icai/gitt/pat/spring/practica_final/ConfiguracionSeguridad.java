@@ -41,9 +41,9 @@ public class ConfiguracionSeguridad {
             }
 
             return User.withDefaultPasswordEncoder()
-                    .username(u.email)
-                    .password(u.password) // contraseña en texto plano
-                    .roles(u.rol.nombreRol.name()) // USER o ADMIN
+                    .username(u.getEmail())
+                    .password(u.getPassword()) // contraseña en texto plano
+                    .roles(u.getRol().getNombreRol().name()) // USER o ADMIN
                     .build();
         };
     }

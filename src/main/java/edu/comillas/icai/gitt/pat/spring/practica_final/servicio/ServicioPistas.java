@@ -4,10 +4,9 @@ import edu.comillas.icai.gitt.pat.spring.practica_final.entidad.Pista;
 import edu.comillas.icai.gitt.pat.spring.practica_final.entidad.Reserva;
 import edu.comillas.icai.gitt.pat.spring.practica_final.repositorio.RepoPista;
 import edu.comillas.icai.gitt.pat.spring.practica_final.repositorio.RepoReserva;
-import edu.comillas.icai.gitt.pat.spring.practica_final.repositorio.RepoRol;
-import edu.comillas.icai.gitt.pat.spring.practica_final.repositorio.RepoUsuario;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,14 +25,10 @@ public class ServicioPistas {
     RepoPista repoPista;
     @Autowired
     RepoReserva repoReserva;
-    @Autowired
-    RepoRol repoRol;
-    @Autowired
-    RepoUsuario repoUsuario;
 
 
     public Pista idPistaExiste(Long idPista) {
-        Pista pista = repoPista.findById((long) idPista).orElse(null);
+        Pista pista = repoPista.findById(idPista).orElse(null);
 
         if (pista == null) {
             throw new ResponseStatusException(
@@ -45,7 +40,7 @@ public class ServicioPistas {
     }
 
     public ResponseEntity<Pista> crearPista(Pista pista) {
-        Pista pistaExistente = repoPista.findByNombre(pista.nombre);
+        Pista pistaExistente = repoPista.findByNombre(pista.getNombre());
 
         if (pistaExistente != null) {
             throw new ResponseStatusException(
@@ -75,10 +70,10 @@ public class ServicioPistas {
 
         Pista pista = idPistaExiste(idPista);
 
-        if (!pista.nombre.equalsIgnoreCase(pistaActualizada.nombre)) {
+        if (!pista.getNombre().equalsIgnoreCase(pistaActualizada.getNombre())) {
             // Si ha cambiado, verificamos que no esté cogido por OTRA pista distinta
 
-            if (repoPista.existsByNombreIgnoreCaseAndIdPistaNot(pistaActualizada.nombre, idPista)) {
+            if (repoPista.existsByNombreIgnoreCaseAndIdPistaNot(pistaActualizada.getNombre(), idPista)) {
                 throw new ResponseStatusException(
                         HttpStatus.CONFLICT,
                         "El nombre nuevo de la pista ya está siendo utilizado"
@@ -86,10 +81,10 @@ public class ServicioPistas {
             }
         }
 
-        pista.nombre = pistaActualizada.nombre;
-        pista.ubicacion = pistaActualizada.ubicacion;
-        pista.precioHora = pistaActualizada.precioHora;
-        pista.activa = pistaActualizada.activa;
+        pista.setNombre(pistaActualizada.getNombre());
+        pista.setUbicacion(pistaActualizada.getUbicacion());
+        pista.setPrecioHora(pistaActualizada.getPrecioHora());
+        pista.setActiva(pistaActualizada.isActiva());
 
         repoPista.save(pista);
 
@@ -98,6 +93,12 @@ public class ServicioPistas {
 
     public ResponseEntity<Void> eliminarPista(Long idPista) {
         Pista pista = idPistaExiste(idPista);
+
+        boolean tieneReservasFuturas = repoReserva.existsByPista_IdPistaAndFechaReservaAfter(idPista, LocalDate.now().minusDays(1));
+        if (tieneReservasFuturas) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede eliminar una pista con reservas futuras activas");
+        }
+
         repoPista.delete(pista);
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
@@ -107,7 +108,7 @@ public class ServicioPistas {
 
         Pista pista = idPistaExiste(idPista);
 
-        pista.activa = false;
+        pista.setActiva(false);
 
         repoPista.save(pista);
 
@@ -128,14 +129,20 @@ public class ServicioPistas {
         }
 
         List<Pista> pistas = new ArrayList<>();
-        repoPista.findAll().forEach(pistas::add);
+
+        if (idPista != null) {
+            Pista p = repoPista.findById(idPista).orElseThrow(() ->
+                    new ResponseStatusException(HttpStatus.NOT_FOUND, "Pista no encontrada"));
+            pistas.add(p);
+        } else {
+            repoPista.findAll().forEach(pistas::add);
+        }
 
         return pistas.stream()
-                .filter(p -> idPista == null || p.idPista == (long) idPista)
                 .map(p -> {
                     Map<String, Object> pistaInfo = new HashMap<>();
-                    pistaInfo.put("nombre", p.nombre);
-                    pistaInfo.put("disponibilidad", obtenerDisponibilidadPista(p.idPista, fechaConsulta));
+                    pistaInfo.put("nombre", p.getNombre());
+                    pistaInfo.put("disponibilidad", obtenerDisponibilidadPista(p.getIdPista(), fechaConsulta));
                     return pistaInfo;
                 })
                 .toList();
@@ -154,7 +161,7 @@ public class ServicioPistas {
             );
         }
 
-        Pista pista = repoPista.findById((long)courtId).orElse(null);
+        Pista pista = repoPista.findById(courtId).orElse(null);
 
         if (pista == null) {
             throw new ResponseStatusException(
@@ -163,33 +170,36 @@ public class ServicioPistas {
             );
         }
 
-        List<String> disponibilidad = obtenerDisponibilidadPista((long)courtId, fechaConsulta);
+        List<String> disponibilidad = obtenerDisponibilidadPista(courtId, fechaConsulta);
 
         Map<String, Object> infoPista = new HashMap<>();
-        infoPista.put("nombre", pista.nombre);
+        infoPista.put("nombre", pista.getNombre());
         infoPista.put("disponibilidad", disponibilidad);
 
         return infoPista;
     }
 
     private List<String> obtenerDisponibilidadPista(Long courtId, LocalDate fechaConsulta) {
-
-        List<Reserva> reservasPista = repoReserva.findByPista_IdPistaAndFechaReserva(courtId,fechaConsulta);
-
+        List<Reserva> reservasPista = repoReserva.findByPista_IdPistaAndFechaReserva(courtId, fechaConsulta);
         List<String> disponibilidad = new ArrayList<>();
 
-        List<String> franjas = List.of(
-                "09:00", "10:00", "11:00", "12:00",
-                "13:00", "14:00", "15:00", "16:00",
-                "17:00", "18:00", "19:00", "20:00", "21:00"
+        // Usamos LocalTime en lugar de String para poder hacer comparaciones lógicas
+        List<LocalTime> franjas = List.of(
+                LocalTime.of(9, 0), LocalTime.of(10, 0), LocalTime.of(11, 0), LocalTime.of(12, 0),
+                LocalTime.of(13, 0), LocalTime.of(14, 0), LocalTime.of(15, 0), LocalTime.of(16, 0),
+                LocalTime.of(17, 0), LocalTime.of(18, 0), LocalTime.of(19, 0), LocalTime.of(20, 0),
+                LocalTime.of(21, 0)
         );
 
-        for (String franja : franjas) {
+        for (LocalTime franjaInicio : franjas) {
+            LocalTime franjaFin = franjaInicio.plusHours(1); // Asumimos slots de 1 hora
+
             boolean ocupada = reservasPista.stream()
-                    .anyMatch(r -> r.horaInicio.toString().equals(franja));
+                    .filter(r -> r.getEstado() != Reserva.Estado.CANCELADA) // Descartamos canceladas
+                    .anyMatch(r -> r.getHoraInicio().isBefore(franjaFin) && r.getHoraFin().isAfter(franjaInicio));
 
             if (!ocupada) {
-                disponibilidad.add(franja);
+                disponibilidad.add(franjaInicio.toString());
             }
         }
 

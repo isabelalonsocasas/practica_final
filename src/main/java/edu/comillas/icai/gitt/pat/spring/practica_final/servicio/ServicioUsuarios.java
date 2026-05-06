@@ -1,6 +1,5 @@
 package edu.comillas.icai.gitt.pat.spring.practica_final.servicio;
 
-import edu.comillas.icai.gitt.pat.spring.practica_final.entidad.Pista;
 import edu.comillas.icai.gitt.pat.spring.practica_final.entidad.Rol;
 import edu.comillas.icai.gitt.pat.spring.practica_final.entidad.Usuario;
 import edu.comillas.icai.gitt.pat.spring.practica_final.repositorio.RepoPista;
@@ -20,19 +19,15 @@ import java.util.List;
 @Service
 public class ServicioUsuarios {
     @Autowired
-    RepoPista repoPista;
-    @Autowired
-    RepoReserva repoReserva;
-    @Autowired
     RepoRol repoRol;
     @Autowired
     RepoUsuario repoUsuario;
 
     ///  Métodos usuario
 
-    //Registrarse (completado)
+    //Registrarse
     public ResponseEntity<Usuario> registrarUsuario(Usuario nuevoUsuario) {
-        Usuario usuario = repoUsuario.findByEmail(nuevoUsuario.email);
+        Usuario usuario = repoUsuario.findByEmail(nuevoUsuario.getEmail());
 
         if (usuario != null) {
             throw new ResponseStatusException(
@@ -41,18 +36,7 @@ public class ServicioUsuarios {
             );
         }
 
-        if (nuevoUsuario.rol != null && nuevoUsuario.rol.idRol != null) {
-            Rol rol = repoRol.findById(nuevoUsuario.rol.idRol).orElse(null);
-
-            if (rol == null) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "El ID de rol proporcionado no existe"
-                );
-            }
-            // Sustituimos el rol incompleto por el rol lleno de datos
-            nuevoUsuario.rol = rol;
-        }
+        nuevoUsuario.setRol(repoRol.findByNombreRol(Rol.NombreRol.USER));
 
         repoUsuario.save(nuevoUsuario);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevoUsuario); //Refleja 201 created y el usuario
@@ -91,7 +75,7 @@ public class ServicioUsuarios {
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
         // Comprobar si es el dueño del id el que se ha autenticado
-        boolean esDueno = usuarioLogueado.idUsuario==userId;
+        boolean esDueno = usuarioLogueado.getIdUsuario().equals(userId);
 
         // Si no es admin ni dueño se prohibe el acceso error (403)
         if (!esAdmin && !esDueno) {
@@ -100,7 +84,11 @@ public class ServicioUsuarios {
                     "No autorizado");
         }
 
-        return ResponseEntity.status(HttpStatus.OK).body(usuarioLogueado);
+        Usuario usuarioBuscado = repoUsuario.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+
+        return ResponseEntity.status(HttpStatus.OK).body(usuarioBuscado);
     }
 
     public ResponseEntity<Usuario> actualizaUsuario(Long userId, Usuario usuarioActualizado, Authentication authentication) {
@@ -119,7 +107,7 @@ public class ServicioUsuarios {
         boolean esAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
-        boolean esDueno = usuarioLogueado.idUsuario == userId;
+        boolean esDueno = usuarioLogueado.getIdUsuario() == userId;
 
         if (!esAdmin && !esDueno) {
             throw new ResponseStatusException(
@@ -128,24 +116,27 @@ public class ServicioUsuarios {
         }
 
         // Comprobar email duplicado: Buscamos si ya hay alguien en la BD con ese email
-        Usuario usuarioMismoEmail = repoUsuario.findByEmail(usuarioActualizado.email);
+        Usuario usuarioMismoEmail = repoUsuario.findByEmail(usuarioActualizado.getEmail());
 
         // Si encontramos un usuario con ese email, y su ID NO es el del usuario que estamos editando, es un conflicto
-        if (usuarioMismoEmail != null && !usuarioMismoEmail.idUsuario.equals(userId)) {
+        if (usuarioMismoEmail != null && !usuarioMismoEmail.getIdUsuario().equals(userId)) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "El email ya está en uso por otra cuenta");
         }
 
         // Modificar campos
-        usuarioExistente.nombre = usuarioActualizado.nombre;
-        usuarioExistente.apellidos = usuarioActualizado.apellidos;
-        usuarioExistente.email = usuarioActualizado.email;
-        usuarioExistente.password = usuarioActualizado.password;
-        usuarioExistente.telefono = usuarioActualizado.telefono;
-        usuarioExistente.rol = usuarioActualizado.rol;
-        usuarioExistente.fechaRegistro = usuarioActualizado.fechaRegistro;
-        usuarioExistente.activo = usuarioActualizado.activo;
+        usuarioExistente.setNombre(usuarioActualizado.getNombre());
+        usuarioExistente.setApellidos(usuarioActualizado.getApellidos());
+        usuarioExistente.setEmail(usuarioActualizado.getEmail());
+        usuarioExistente.setPassword(usuarioActualizado.getPassword());
+        usuarioExistente.setTelefono(usuarioActualizado.getTelefono());
+        usuarioExistente.setActivo(usuarioActualizado.getActivo());
+
+        if (esAdmin) {
+            usuarioExistente.setRol(usuarioActualizado.getRol());
+            usuarioExistente.setFechaRegistro(usuarioActualizado.getFechaRegistro());
+        }
 
         repoUsuario.save(usuarioExistente);
 
