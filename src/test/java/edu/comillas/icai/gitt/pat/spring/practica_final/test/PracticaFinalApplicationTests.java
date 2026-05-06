@@ -29,24 +29,26 @@
 //
 //	@Test
 //	void listarPistas_sinFiltro_devuelveTodas() {
-//		// Arrange
 //		repoPista.deleteAll();
 //
 //		Pista p1 = new Pista();
+//		p1.setNombre("Pista Test 1");
+//		p1.setUbicacion("Norte");
+//		p1.setPrecioHora(10.0);
 //		p1.setActiva(true);
 //
 //		Pista p2 = new Pista();
+//		p2.setNombre("Pista Test 2");
+//		p2.setUbicacion("Sur");
+//		p2.setPrecioHora(12.0);
 //		p2.setActiva(false);
 //
 //		repoPista.save(p1);
 //		repoPista.save(p2);
 //
-//		// Act
-//		ResponseEntity<Pista[]> response =
-//				restTemplate.getForEntity(getBaseUrl(), Pista[].class);
+//		ResponseEntity<Pista[]> response = restTemplate.getForEntity(getBaseUrl(), Pista[].class);
 //
-//		// Assert
-//		assertEquals(200, response.getStatusCodeValue());
+//		assertEquals(200, response.getStatusCode().value());
 //		assertNotNull(response.getBody());
 //		assertEquals(2, response.getBody().length);
 //	}

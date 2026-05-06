@@ -39,25 +39,24 @@ public class TareasProgramadas {
 
 
     @Scheduled(cron = "0 0 2 * * *")
-    public void recordatorioReserva(){
+    public void recordatorioReserva() {
         LocalDate hoy = LocalDate.now();
 
         List<Reserva> reservasHoy = repoReserva.findByFechaReservaAndEstado(hoy, Reserva.Estado.ACTIVA);
 
-        for (Reserva r : reservasHoy){
+        for (Reserva r : reservasHoy) {
             Usuario u = r.getUsuario();
             System.out.println("=================================");
             System.out.println("EMAIL SIMULADO");
             System.out.println("Para: " + u.getEmail());
             System.out.println("Asunto: Recordatorio Reserva");
-            System.out.println("Mensaje: Le recordamos su reserva de hoy día " + hoy + " a las " + r.getHoraInicio() +"h. Dispondrá de " + r.getDuracionMinutos()+ " minutos de uso.");
+            System.out.println("Mensaje: Le recordamos su reserva de hoy día " + hoy + " a las " + r.getHoraInicio() + "h. Dispondrá de " + r.getDuracionMinutos() + " minutos de uso.");
             System.out.println("=================================");
-            }
         }
     }
 
     @Scheduled(cron = "0 0 9 1 * *")
-    public void correoMensual(){
+    public void correoMensual() {
 
         logger.info("Generando reporte mensual de disponibilidad...");
 
@@ -106,3 +105,4 @@ public class TareasProgramadas {
         }
         return sb.toString();
     }
+}
