@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -37,6 +38,7 @@ public class ServicioUsuarios {
         }
 
         nuevoUsuario.setRol(repoRol.findByNombreRol(Rol.NombreRol.USER));
+        nuevoUsuario.setFechaRegistro(LocalDateTime.now());
 
         repoUsuario.save(nuevoUsuario);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevoUsuario); //Refleja 201 created y el usuario
